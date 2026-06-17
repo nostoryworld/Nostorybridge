@@ -1,5 +1,4 @@
-import import React, { useState, useRef } from "react";
-
+import React, { useState, useRef } from "react";
 const TG_TOKEN   = "8939696398:AAF4219VOMCAMKPQvJ-FhJwXVzQW69rOU5A";
 const TG_CHAT_ID = "6336428728";
 const TG_API     = `https://api.telegram.org/bot${TG_TOKEN}`;
