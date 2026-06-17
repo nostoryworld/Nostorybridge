@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import import React, { useState, useRef } from "react";
 
 const TG_TOKEN   = "8939696398:AAF4219VOMCAMKPQvJ-FhJwXVzQW69rOU5A";
 const TG_CHAT_ID = "6336428728";
@@ -30,10 +30,10 @@ const MENU_DATA = {
 // #1 — Real player names from Nostory Bridge regulars
 const LEADERBOARD = [
   {rank:1,name:"Oju Igo",   wins:47,games:52,title:"Champion"},
-  {rank:2,name:"Big Israel",wins:38,games:44,title:"Runner Up"},
-  {rank:3,name:"Steady",    wins:31,games:40,title:"Top 3"},
-  {rank:4,name:"Saouty",    wins:24,games:32,title:"Top 5"},
-  {rank:5,name:"Stand Fit", wins:44,games:50,title:"Top 5"},
+  {rank:2,name:"Stand Fit", wins:44,games:50,title:"Runner Up"},
+  {rank:3,name:"Big Israel",wins:38,games:44,title:"Top 3"},
+  {rank:4,name:"Steady",    wins:31,games:40,title:"Top 4"},
+  {rank:5,name:"Saouty",    wins:24,games:32,title:"Top 5"},
 ];
 
 const REGULARS = [
@@ -172,6 +172,263 @@ function MatchCard({match}){
   );
 }
 
+// ─── LEADERBOARD WITH COMMENTS + ADMIN EDIT ──────────────────────────────────
+function LeaderboardSection({defaultPlayers, adminPin}){
+  const [players,   setPlayers]   = useState(defaultPlayers);
+  const [comments,  setComments]  = useState({});
+  const [newComment,setNewComment]= useState({});
+  const [commenter, setCommenter] = useState({});
+  const [commentOpen,setCommentOpen]= useState(null);
+  const [adminMode, setAdminMode] = useState(false);
+  const [pinInput,  setPinInput]  = useState("");
+  const [pinError,  setPinError]  = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [saved,     setSaved]     = useState(false);
+  const [loading,   setLoading]   = useState(true);
+  const [postFlash, setPostFlash] = useState(null);
+
+  React.useEffect(()=>{
+    async function load(){
+      try{
+        const pr=await window.storage.get("nb_players");
+        if(pr) setPlayers(JSON.parse(pr.value));
+        const cr=await window.storage.get("nb_comments");
+        if(cr) setComments(JSON.parse(cr.value));
+      }catch(e){}
+      setLoading(false);
+    }
+    load();
+  },[]);
+
+  async function savePlayers(list){
+    const sorted=[...list].sort((a,b)=>b.wins-a.wins).map((p,i)=>({...p,rank:i+1}));
+    setPlayers(sorted);
+    try{ await window.storage.set("nb_players",JSON.stringify(sorted)); }catch(e){}
+    setSaved(true); setTimeout(()=>setSaved(false),2000);
+  }
+
+  async function saveComments(updated){
+    setComments(updated);
+    try{ await window.storage.set("nb_comments",JSON.stringify(updated)); }catch(e){}
+  }
+
+  function submitComment(playerName){
+    const text=(newComment[playerName]||"").trim();
+    if(!text) return;
+    const name=(commenter[playerName]||"").trim()||"Anonymous";
+    const c={name,text,time:new Date().toLocaleDateString("en-NG",{day:"numeric",month:"short"})};
+    const updated={...comments,[playerName]:[...(comments[playerName]||[]),c]};
+    saveComments(updated);
+    setNewComment(p=>({...p,[playerName]:""}));
+    setCommenter(p=>({...p,[playerName]:""}));
+    setPostFlash(playerName);
+    setTimeout(()=>setPostFlash(null),1500);
+  }
+
+  function deleteComment(playerName,idx){
+    const updated={...comments,[playerName]:comments[playerName].filter((_,i)=>i!==idx)};
+    saveComments(updated);
+  }
+
+  function tryAdminLogin(){
+    if(pinInput===adminPin){setAdminMode(true);setShowAdmin(false);setPinError(false);setPinInput("");}
+    else{setPinError(true);setTimeout(()=>setPinError(false),2000);}
+  }
+
+  function updatePlayer(idx,field,val){
+    setPlayers(prev=>prev.map((p,i)=>i===idx?{...p,[field]:field==="wins"||field==="games"?parseInt(val)||0:val}:p));
+  }
+
+  const MEDAL=["👑","🥈","🥉","4️⃣","5️⃣"];
+
+  if(loading) return(
+    <div style={{textAlign:"center",padding:40,color:"var(--gold)",fontSize:"0.8rem",letterSpacing:"0.2em"}}>
+      Loading leaderboard...
+    </div>
+  );
+
+  return(
+    <div>
+      {/* PLAYER CARDS */}
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {players.map((p,idx)=>{
+          const pComments=comments[p.name]||[];
+          const isOpen=commentOpen===p.name;
+          const winRate=Math.round(p.wins/Math.max(p.games,1)*100);
+          return(
+            <div key={p.name+idx} style={{background:"var(--felt-mid)",border:`1px solid ${p.rank===1?"rgba(201,146,42,0.5)":"rgba(201,146,42,0.15)"}`,overflow:"hidden",transition:"all 0.2s"}}>
+
+              {/* PLAYER ROW */}
+              <div style={{display:"grid",gridTemplateColumns:"44px 1fr auto",alignItems:"center",gap:12,padding:"16px 18px"}}>
+
+                {/* Rank */}
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:p.rank<=3?"1.8rem":"1.4rem",lineHeight:1,color:p.rank===1?"var(--gold-bright)":p.rank===2?"var(--chalk)":p.rank===3?"var(--brown-ball)":"var(--gold-dim)"}}>
+                    {p.rank<=3?MEDAL[p.rank-1]:p.rank}
+                  </div>
+                </div>
+
+                {/* Player info */}
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
+                    <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.05rem",fontWeight:600,color:"var(--cream)"}}>{p.name}</span>
+                    {p.rank===1&&<span style={{fontSize:"0.52rem",letterSpacing:"0.15em",background:"rgba(201,146,42,0.2)",color:"var(--gold)",padding:"2px 6px",textTransform:"uppercase"}}>CHAMPION</span>}
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                    <span style={{fontSize:"0.68rem",color:"var(--chalk)"}}>{p.wins}W · {p.games}G</span>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{width:50,height:3,background:"var(--felt-light)",borderRadius:2,overflow:"hidden"}}>
+                        <div style={{width:`${winRate}%`,height:"100%",background:"linear-gradient(90deg,var(--gold-dim),var(--gold-bright))"}}/>
+                      </div>
+                      <span style={{fontSize:"0.62rem",color:"var(--gold)"}}>{winRate}%</span>
+                    </div>
+                  </div>
+
+                  {/* Admin edit inline */}
+                  {adminMode&&(
+                    <div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 60px 60px",gap:6}}>
+                      <input value={p.name} onChange={e=>updatePlayer(idx,"name",e.target.value)}
+                        placeholder="Name"
+                        style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.3)",color:"var(--cream)",padding:"5px 8px",fontSize:"0.7rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
+                      <input type="number" value={p.wins} onChange={e=>updatePlayer(idx,"wins",e.target.value)}
+                        placeholder="W"
+                        style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.3)",color:"var(--cream)",padding:"5px 6px",fontSize:"0.7rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
+                      <input type="number" value={p.games} onChange={e=>updatePlayer(idx,"games",e.target.value)}
+                        placeholder="G"
+                        style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.3)",color:"var(--cream)",padding:"5px 6px",fontSize:"0.7rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
+                    </div>
+                  )}
+                </div>
+
+                {/* Comment button */}
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <button
+                    onClick={()=>setCommentOpen(isOpen?null:p.name)}
+                    style={{background:isOpen?"rgba(201,146,42,0.2)":"rgba(201,146,42,0.08)",border:`1px solid ${isOpen?"var(--gold)":"rgba(201,146,42,0.25)"}`,color:isOpen?"var(--gold-bright)":"var(--chalk)",padding:"8px 12px",cursor:"pointer",fontSize:"0.65rem",letterSpacing:"0.1em",fontFamily:"monospace",display:"flex",flexDirection:"column",alignItems:"center",gap:3,minWidth:52,transition:"all 0.15s"}}>
+                    <span style={{fontSize:"1rem"}}>💬</span>
+                    <span style={{fontSize:"0.55rem",textTransform:"uppercase",letterSpacing:"0.15em"}}>
+                      {pComments.length>0?pComments.length:"Chat"}
+                    </span>
+                  </button>
+                  {adminMode&&(
+                    <button onClick={()=>{if(window.confirm(`Remove ${p.name}?`)) savePlayers(players.filter((_,i)=>i!==idx));}}
+                      style={{background:"rgba(192,57,43,0.15)",border:"1px solid rgba(192,57,43,0.3)",color:"#e57373",padding:"4px 8px",cursor:"pointer",fontSize:"0.6rem",fontFamily:"monospace"}}>
+                      ✕ RM
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* COMMENT PANEL */}
+              {isOpen&&(
+                <div style={{borderTop:"1px solid rgba(201,146,42,0.12)",background:"rgba(0,0,0,0.25)",padding:"16px 18px"}}>
+
+                  {/* Existing comments */}
+                  {pComments.length===0&&(
+                    <div style={{fontSize:"0.72rem",color:"var(--chalk)",opacity:0.5,fontStyle:"italic",marginBottom:14,textAlign:"center",padding:"8px 0"}}>
+                      No comments yet — be the first to hype {p.name}! 🎱
+                    </div>
+                  )}
+                  {pComments.length>0&&(
+                    <div style={{marginBottom:14,display:"flex",flexDirection:"column",gap:8,maxHeight:200,overflowY:"auto"}}>
+                      {pComments.map((c,ci)=>(
+                        <div key={ci} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(201,146,42,0.1)",padding:"10px 12px",borderRadius:2}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                            <span style={{fontSize:"0.68rem",color:"var(--gold-bright)",fontWeight:600}}>{c.name}</span>
+                            <div style={{display:"flex",alignItems:"center",gap:8}}>
+                              <span style={{fontSize:"0.58rem",color:"var(--chalk)",opacity:0.45}}>{c.time}</span>
+                              {adminMode&&(
+                                <button onClick={()=>deleteComment(p.name,ci)}
+                                  style={{background:"none",border:"none",color:"#e57373",cursor:"pointer",fontSize:"0.75rem",padding:0,lineHeight:1}}>✕</button>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{fontSize:"0.73rem",color:"var(--chalk)",lineHeight:1.55}}>{c.text}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Post comment form */}
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    <input
+                      placeholder="Your name (optional)"
+                      value={commenter[p.name]||""}
+                      onChange={e=>setCommenter(prev=>({...prev,[p.name]:e.target.value}))}
+                      style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.2)",color:"var(--cream)",padding:"9px 12px",fontSize:"0.73rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
+                    <div style={{display:"flex",gap:8}}>
+                      <input
+                        placeholder={`Say something about ${p.name}...`}
+                        value={newComment[p.name]||""}
+                        onChange={e=>setNewComment(prev=>({...prev,[p.name]:e.target.value}))}
+                        onKeyDown={e=>e.key==="Enter"&&submitComment(p.name)}
+                        style={{flex:1,background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.2)",color:"var(--cream)",padding:"9px 12px",fontSize:"0.73rem",fontFamily:"monospace",outline:"none",minWidth:0}}/>
+                      <button
+                        onClick={()=>submitComment(p.name)}
+                        style={{background:postFlash===p.name?"#4caf50":"var(--gold)",color:"#0a0a0a",border:"none",padding:"9px 18px",fontSize:"0.68rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.1em",whiteSpace:"nowrap",flexShrink:0,transition:"background 0.2s"}}>
+                        {postFlash===p.name?"✓ SENT":"POST"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* FOOTER BAR */}
+      <div style={{marginTop:16,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+        <div style={{padding:"12px 16px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.12)",fontSize:"0.7rem",color:"var(--chalk)",display:"flex",gap:10,alignItems:"center",flex:1,minWidth:200}}>
+          <span>🎱</span><span>Tap 💬 on any player to comment. Leaderboard updates every Monday.</span>
+        </div>
+
+        {!adminMode?(
+          <button onClick={()=>setShowAdmin(s=>!s)}
+            style={{background:"rgba(201,146,42,0.07)",border:"1px solid rgba(201,146,42,0.18)",color:"var(--gold-dim)",padding:"10px 16px",fontSize:"0.6rem",cursor:"pointer",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+            🔐 Admin
+          </button>
+        ):(
+          <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+            <button onClick={()=>setPlayers(prev=>[...prev,{rank:prev.length+1,name:"New Player",wins:0,games:0,title:""}])}
+              style={{background:"rgba(76,175,80,0.12)",border:"1px solid rgba(76,175,80,0.3)",color:"#4caf50",padding:"9px 14px",fontSize:"0.62rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.08em"}}>
+              + ADD
+            </button>
+            <button onClick={()=>savePlayers(players)}
+              style={{background:saved?"#4caf50":"var(--gold)",color:"#0a0a0a",border:"none",padding:"9px 16px",fontSize:"0.62rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.08em",transition:"background 0.2s"}}>
+              {saved?"✓ SAVED":"💾 SAVE"}
+            </button>
+            <button onClick={()=>setAdminMode(false)}
+              style={{background:"rgba(192,57,43,0.1)",border:"1px solid rgba(192,57,43,0.2)",color:"#e57373",padding:"9px 14px",fontSize:"0.62rem",cursor:"pointer",fontFamily:"monospace"}}>
+              EXIT
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* PIN LOGIN */}
+      {showAdmin&&!adminMode&&(
+        <div style={{marginTop:12,padding:"16px 18px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.25)"}}>
+          <div style={{fontSize:"0.62rem",color:"var(--gold)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:10}}>🔐 Admin PIN</div>
+          <div style={{display:"flex",gap:8}}>
+            <input type="password" placeholder="Enter PIN"
+              value={pinInput} onChange={e=>setPinInput(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&tryAdminLogin()}
+              style={{flex:1,background:"var(--felt-light)",border:`1px solid ${pinError?"var(--red-ball)":"rgba(201,146,42,0.3)"}`,color:"var(--cream)",padding:"11px 14px",fontSize:"1rem",fontFamily:"monospace",outline:"none",letterSpacing:"0.3em"}}/>
+            <button onClick={tryAdminLogin}
+              style={{background:"var(--gold)",color:"#0a0a0a",border:"none",padding:"11px 22px",fontSize:"0.7rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.1em"}}>
+              ENTER
+            </button>
+          </div>
+          {pinError&&<div style={{fontSize:"0.65rem",color:"#e57373",marginTop:6}}>❌ Wrong PIN. Try again.</div>}
+          <div style={{fontSize:"0.56rem",color:"var(--chalk)",opacity:0.4,marginTop:8}}>Owner access only</div>
+        </div>
+      )}
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function NostoryBridge(){
   const [marbleQty,setMarbleQty]=useState(0);
   const [woodQty,setWoodQty]=useState(0);
@@ -186,6 +443,12 @@ export default function NostoryBridge(){
   const [successMsg,setSuccessMsg]=useState({title:"",sub:""});
   const [dragOver,setDragOver]=useState(false);
   const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
+  const [copied,setCopied]=useState(false);
+  const [appLoaded,setAppLoaded]=useState(false);
+  const [tableOpen,setTableOpen]=useState(true);
+  const [showBanner,setShowBanner]=useState(true);
+  const [bookingRef]=useState(()=>`NB-${Math.floor(1000+Math.random()*9000)}`);
+  React.useEffect(()=>{const t=setTimeout(()=>setAppLoaded(true),1200);return()=>clearTimeout(t);},[]);
   const fileRef=useRef();
 
   const scrollTo=id=>{document.getElementById(id)?.scrollIntoView({behavior:"smooth"});setMobileMenuOpen(false);};
@@ -265,6 +528,7 @@ export default function NostoryBridge(){
       const text=[
         "🎱 *NEW BOOKING — NOSTORY BRIDGE*",
         "",
+        `🎫 *Ref:* ${bookingRef}`,
         `👤 *Name:* ${snapName}`,
         `📞 *Phone:* ${snapPhone||"Not provided"}`,
         `📅 *Date:* ${snapDate}`,
@@ -334,7 +598,7 @@ export default function NostoryBridge(){
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--felt);font-family:'Fira Code',monospace;color:var(--cream);overflow-x:hidden;}
   .grain{position:fixed;inset:0;pointer-events:none;z-index:999;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px;}
-  nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:center;justify-content:space-between;padding:16px 40px;background:rgba(11,31,13,0.97);border-bottom:1px solid rgba(201,146,42,0.15);}
+  nav{position:fixed;top:0;left:0;right:0;z-index:300;transition:top 0.2s;display:flex;align-items:center;justify-content:space-between;padding:16px 40px;background:rgba(11,31,13,0.97);border-bottom:1px solid rgba(201,146,42,0.15);}
   .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.12em;color:var(--gold-bright);}
   .nav-logo span{color:var(--cream);}
   .nav-links{display:flex;gap:24px;list-style:none;}
@@ -539,21 +803,65 @@ export default function NostoryBridge(){
     .hiw-grid{grid-template-columns:1fr;}
     .hiw-arrow{display:none;}
     .gallery-grid{grid-template-columns:1fr 1fr;}
+    .leaderboard-table th:nth-child(4),.leaderboard-table td:nth-child(4){display:none;}
   }
   @media(max-width:600px){
-    nav{padding:13px 18px;}
+    nav{padding:12px 16px;}
     .nav-links{display:none;}
     .nav-hamburger{display:block;}
-    .section{padding:60px 18px;}
-    footer{flex-direction:column;text-align:center;padding:32px 18px;}
-    .hero{padding:100px 18px 60px;}
-    .board-body{padding:18px;}
-    .board-header-marble,.board-header-wood{padding:22px 18px 18px;}
-    .booking-form-card{padding:22px 16px;}
+    .nav-logo{font-size:1.4rem;}
+    .section{padding:52px 16px;}
+    .section-title{font-size:clamp(2.2rem,10vw,3.5rem);}
+    footer{flex-direction:column;text-align:center;padding:28px 16px;}
+    .footer-links{justify-content:center;gap:14px;flex-wrap:wrap;}
+    .hero{padding:90px 16px 52px;}
+    .hero-title{font-size:clamp(3.5rem,18vw,6rem);}
+    .board-body{padding:16px;}
+    .board-header-marble,.board-header-wood{padding:20px 16px 16px;}
+    .board-name{font-size:1.5rem;}
+    .price-amt{font-size:1.7rem;}
+    .gc-count{font-size:1.8rem;}
+    .gc-btn{width:36px;height:36px;}
+    .booking-form-card{padding:18px 14px;}
     .bf-grid{grid-template-columns:1fr;}
-    .location-card{padding:22px 16px;}
+    .bf-title{font-size:1.2rem;}
+    .order-summary-bar{padding:10px 14px;gap:8px;}
+    .osb-total{font-size:1.3rem;}
+    .combined-amt{font-size:1.5rem;}
+    .bank-details{padding:12px 14px;}
+    .bank-total{font-size:1.1rem;}
+    .location-card{padding:18px 14px;grid-template-columns:1fr;}
     .gallery-grid{grid-template-columns:1fr;}
     .regulars-grid{grid-template-columns:1fr 1fr;}
+    .hiw-card{padding:22px 16px;}
+    .hiw-num{font-size:3rem;}
+    .menu-grid{grid-template-columns:1fr;}
+    .menu-card{padding:16px;}
+    .success-card{padding:32px 20px;}
+    .success-title{font-size:1.8rem;}
+    .leaderboard-table{font-size:0.75rem;}
+    .leaderboard-table th{font-size:0.52rem;padding:0 8px 12px;}
+    .leaderboard-table td{padding:12px 8px;}
+    .leaderboard-table th:nth-child(4),.leaderboard-table td:nth-child(4){display:none;}
+    .leaderboard-table th:nth-child(6),.leaderboard-table td:nth-child(6){display:none;}
+    .player-badge{display:none;}
+    .wins-bar{flex-direction:column;align-items:flex-start;gap:3px;}
+    .bar-track{max-width:60px;}
+    .hours-grid{grid-template-columns:1fr;}
+    .btn-wa-float{bottom:20px;left:16px;width:48px;height:48px;font-size:1.2rem;}
+    .divider{margin:0 16px;}
+    .osb-item{min-width:0;}
+    .promo-badge{font-size:0.58rem;padding:4px 8px;}
+    .upload-zone{padding:24px 14px;}
+    .hero-ctas{gap:10px;}
+    .btn-primary,.btn-secondary{padding:12px 22px;font-size:0.68rem;}
+    .mobile-menu a{font-size:0.7rem;padding:12px 0;}
+  }
+  @media(max-width:380px){
+    .section{padding:44px 12px;}
+    .regulars-grid{grid-template-columns:1fr;}
+    .hero-title{font-size:3rem;}
+    .boards-grid{gap:16px;}
   }
   `;
 
@@ -562,11 +870,37 @@ export default function NostoryBridge(){
       <style>{CSS}</style>
       <div className="grain"/>
 
+      {/* #4 LOADING SCREEN */}
+      {!appLoaded&&(
+        <div style={{position:"fixed",inset:0,background:"var(--felt)",zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20}}>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"3rem",letterSpacing:"0.15em",color:"var(--gold-bright)"}}>NOSTORY<span style={{color:"var(--cream)"}}>BRIDGE</span></div>
+          <div style={{display:"flex",gap:10}}>
+            {["#c0392b","#f1c40f","#2980b9","#e87fac","#8b5e3c","#1a1a1a"].map((c,i)=>(
+              <div key={i} style={{width:12,height:12,borderRadius:"50%",background:c,animation:`ballBounce 1s ${i*0.12}s ease-in-out infinite`}}/>
+            ))}
+          </div>
+          <div style={{fontSize:"0.65rem",letterSpacing:"0.3em",textTransform:"uppercase",color:"var(--chalk)",opacity:0.5}}>Where Champions Come to Play</div>
+        </div>
+      )}
+
+      {/* #8 TOURNAMENT BANNER */}
+      {showBanner&&appLoaded&&(
+        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:400,background:"linear-gradient(90deg,#c0392b,#8b1a1a)",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,flex:1,flexWrap:"wrap"}}>
+            <span style={{fontSize:"0.9rem"}}>🏆</span>
+            <span style={{fontSize:"0.68rem",letterSpacing:"0.1em",color:"#fff",fontFamily:"'Fira Code',monospace"}}>
+              <strong>NEXT TOURNAMENT:</strong> Saturday 28 Jun — Register at the counter · 08080236462
+            </span>
+          </div>
+          <button onClick={()=>setShowBanner(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.7)",fontSize:"1.1rem",cursor:"pointer",flexShrink:0,padding:"0 4px"}}>✕</button>
+        </div>
+      )}
+
       {/* NAV */}
-      <nav>
+      <nav style={{top:showBanner?'40px':'0',transition:'top 0.3s'}}>
         <div className="nav-logo">NOSTORY <span>BRIDGE</span></div>
         <ul className="nav-links">
-          {[["How It Works","how"],["Book & Play","book"],["Menu","menu"],["Regulars","regulars"],["Leaderboard","leaderboard"],["Bets 🔜","betting"],["Find Us","location"]].map(([l,id])=>(
+          {[["How It Works","how"],["Book & Play","book"],["Menu","menu"],["Regulars","regulars"],["Reviews","reviews"],["Leaderboard","leaderboard"],["Bets 🔜","betting"],["Find Us","location"]].map(([l,id])=>(
             <li key={id}><a onClick={()=>scrollTo(id)}>{l}</a></li>
           ))}
         </ul>
@@ -574,7 +908,7 @@ export default function NostoryBridge(){
       </nav>
 
       <div className={`mobile-menu ${mobileMenuOpen?"open":""}`}>
-        {[["How It Works","how"],["Book & Play","book"],["Menu","menu"],["Regulars","regulars"],["Leaderboard","leaderboard"],["Bets 🔜","betting"],["Find Us","location"]].map(([l,id])=>(
+        {[["How It Works","how"],["Book & Play","book"],["Menu","menu"],["Regulars","regulars"],["Reviews","reviews"],["Leaderboard","leaderboard"],["Bets 🔜","betting"],["Find Us","location"]].map(([l,id])=>(
           <a key={id} onClick={()=>scrollTo(id)}>{l}</a>
         ))}
       </div>
@@ -591,8 +925,24 @@ export default function NostoryBridge(){
             <button className="btn-primary" onClick={()=>scrollTo("book")}>Book a Game</button>
             <button className="btn-secondary" onClick={()=>scrollTo("how")}>How It Works</button>
           </div>
+          <a href="tel:+2348080236462" style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:20,color:"var(--chalk)",textDecoration:"none",fontSize:"0.72rem",letterSpacing:"0.15em",opacity:0.8,animation:"fadeUp 0.8s 0.75s ease both"}}>
+            📞 <span style={{borderBottom:"1px solid rgba(212,207,196,0.3)"}}>08080236462</span>
+          </a>
         </div>
       </section>
+
+      {/* #7 TABLE AVAILABILITY */}
+      <div style={{background:tableOpen?"rgba(76,175,80,0.08)":"rgba(192,57,43,0.08)",border:`1px solid ${tableOpen?"rgba(76,175,80,0.3)":"rgba(192,57,43,0.3)"}`,margin:"0 40px",padding:"14px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:10,height:10,borderRadius:"50%",background:tableOpen?"#4caf50":"#e74c3c",animation:"pulse 2s ease-in-out infinite"}}/>
+          <span style={{fontSize:"0.72rem",color:tableOpen?"#4caf50":"#e57373",letterSpacing:"0.1em",fontFamily:"'Fira Code',monospace"}}>
+            {tableOpen?"🎱 Tables Available Now — Walk in or Book Online":"🚫 Tables Currently Full — Call to Check"}
+          </span>
+        </div>
+        <a href="tel:+2348080236462" style={{fontSize:"0.65rem",color:"var(--gold)",letterSpacing:"0.15em",textDecoration:"none",textTransform:"uppercase"}}>
+          📞 Call 08080236462
+        </a>
+      </div>
 
       <div className="divider"/>
 
@@ -696,7 +1046,14 @@ export default function NostoryBridge(){
             <div className="bank-details">
               <div className="bank-row"><span className="lbl">Bank</span><span className="val">Premium Trust Bank</span></div>
               <div className="bank-row"><span className="lbl">Account Name</span><span className="val">Grupp / Ezekiel Odemakinde</span></div>
-              <div className="bank-row"><span className="lbl">Account Number</span><span className="val" style={{fontSize:"1.05rem",letterSpacing:"0.12em",color:"var(--gold-bright)"}}>4026951870</span></div>
+              <div className="bank-row"><span className="lbl">Account Number</span>
+                <span style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span className="val" style={{fontSize:"1.05rem",letterSpacing:"0.12em",color:"var(--gold-bright)"}}>4026951870</span>
+                  <button onClick={()=>{navigator.clipboard.writeText("4026951870");setCopied(true);setTimeout(()=>setCopied(false),2000);}}
+                    style={{background:copied?"#4caf50":"rgba(201,146,42,0.15)",border:"1px solid rgba(201,146,42,0.3)",color:copied?"#fff":"var(--gold)",padding:"3px 8px",fontSize:"0.6rem",cursor:"pointer",letterSpacing:"0.1em",transition:"all 0.2s",fontFamily:"monospace"}}>
+                    {copied?"✓ COPIED":"COPY"}
+                  </button>
+                </span></div>
               {hasAnyGames&&(
                 <div className="bank-row" style={{paddingTop:10,marginTop:4,borderTop:"1px solid rgba(201,146,42,0.15)"}}>
                   <span className="lbl">Amount to Transfer</span>
@@ -792,9 +1149,42 @@ export default function NostoryBridge(){
         </div>
       </section>
 
+
       <div className="divider"/>
 
-      {/* MENU */}
+      {/* TESTIMONIALS */}
+      <section className="section" id="reviews">
+        <div className="section-label">What They Say</div>
+        <h2 className="section-title">Real Talk</h2>
+        <p className="section-sub">From the regulars who live on these tables.</p>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:20}}>
+          {[
+            {name:"Oju Igo",emoji:"👑",quote:"Best table in Oke Aro. The marble board is smooth — no excuses when you miss. I come every week.",rating:5},
+            {name:"Stand Fit",emoji:"🔥",quote:"The free game system is mad. I ordered 10 games and got 4 free. Nobody else does that around here.",rating:5},
+            {name:"Big Israel",emoji:"💪",quote:"Night sessions are the best. Cold drink, good vibes, proper competition. Nostory Bridge is different.",rating:5},
+            {name:"Steady",emoji:"🎯",quote:"I've played at other joints but this place has the best setup. The online booking is very sharp.",rating:5},
+            {name:"Saouty",emoji:"⚡",quote:"Competitive crowd. If you want to improve your game, come here. Oju Igo will humble you fast.",rating:5},
+            {name:"Ighe Nation",emoji:"🏆",quote:"The ZkAGI tournament they hosted was incredible. Real prizes, real players. Can't wait for the next one.",rating:5},
+          ].map((t,i)=>(
+            <div key={i} style={{background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.15)",padding:"24px 22px",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:12,right:16,fontSize:"2rem",opacity:0.08,fontFamily:"Georgia,serif",lineHeight:1}}>"</div>
+              <div style={{display:"flex",gap:4,marginBottom:12}}>
+                {[...Array(t.rating)].map((_,j)=><span key={j} style={{color:"var(--gold-bright)",fontSize:"0.75rem"}}>★</span>)}
+              </div>
+              <div style={{fontSize:"0.78rem",color:"var(--chalk)",lineHeight:1.7,marginBottom:16,fontStyle:"italic"}}>"{t.quote}"</div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:32,height:32,borderRadius:"50%",background:"rgba(201,146,42,0.15)",border:"1px solid rgba(201,146,42,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1rem"}}>{t.emoji}</div>
+                <div>
+                  <div style={{fontSize:"0.78rem",color:"var(--cream)",fontWeight:600}}>{t.name}</div>
+                  <div style={{fontSize:"0.6rem",color:"var(--gold)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Regular Player</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="divider"/>
       <section className="section" id="menu">
         <div className="section-label">Canteen</div>
         <h2 className="section-title">Food & Drinks</h2>
@@ -852,23 +1242,7 @@ export default function NostoryBridge(){
       <section className="section" id="leaderboard">
         <div className="section-label">Hall of Fame</div>
         <h2 className="section-title">Top Players</h2>
-        <table className="leaderboard-table">
-          <thead><tr><th>#</th><th>Player</th><th>Wins</th><th>Win Rate</th><th>Games</th></tr></thead>
-          <tbody>
-            {LEADERBOARD.map(p=>(
-              <tr key={p.rank}>
-                <td><span className={`rank-num rank-${p.rank}`}>{p.rank===1?"👑":p.rank}</span></td>
-                <td><span className="player-name">{p.name}</span>{p.rank===1&&<span className="player-badge">CHAMPION</span>}</td>
-                <td style={{color:"var(--cream)",fontWeight:500}}>{p.wins}</td>
-                <td><div className="wins-bar"><div className="bar-track"><div className="bar-fill" style={{width:`${Math.round(p.wins/p.games*100)}%`}}/></div><span style={{fontSize:"0.68rem",color:"var(--gold)",minWidth:32}}>{Math.round(p.wins/p.games*100)}%</span></div></td>
-                <td style={{color:"var(--chalk)",fontSize:"0.76rem"}}>{p.games}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div style={{marginTop:26,padding:"16px 20px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.15)",fontSize:"0.72rem",color:"var(--chalk)",display:"flex",gap:12,alignItems:"center"}}>
-          <span>🎱</span><span>Leaderboard updates every Monday. Top 5 players earn a free 10-game session on any board each month.</span>
-        </div>
+        <LeaderboardSection defaultPlayers={LEADERBOARD} adminPin="836482"/>
       </section>
 
       <div className="divider"/>
@@ -945,6 +1319,27 @@ export default function NostoryBridge(){
         </div>
       </section>
 
+
+          {/* #10 SHARE BUTTON */}
+          <div style={{marginTop:24,padding:"16px 20px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.15)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+            <div>
+              <div style={{fontSize:"0.7rem",color:"var(--cream)",marginBottom:3}}>📣 Share Nostory Bridge</div>
+              <div style={{fontSize:"0.62rem",color:"var(--chalk)",opacity:0.7}}>Let your people know about us</div>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <a href={`https://wa.me/?text=${encodeURIComponent("Check out Nostory Bridge — premium snooker lounge in Oke Aro, Ogun State. Book online: https://www.nostorybridge.name.ng 🎱")}`}
+                target="_blank" rel="noreferrer"
+                style={{background:"#25D366",color:"#fff",padding:"8px 14px",fontSize:"0.65rem",letterSpacing:"0.1em",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:6,fontFamily:"monospace"}}>
+                💬 WhatsApp
+              </a>
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent("Just discovered Nostory Bridge — premium snooker lounge in Oke Aro, Ogun State 🎱 Book a table online: https://www.nostorybridge.name.ng @nostoryboss")}`}
+                target="_blank" rel="noreferrer"
+                style={{background:"#000",color:"#fff",padding:"8px 14px",fontSize:"0.65rem",letterSpacing:"0.1em",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:6,fontFamily:"monospace"}}>
+                𝕏 Tweet
+              </a>
+            </div>
+          </div>
+
       <footer>
         <div>
           <div className="footer-logo">NOSTORY BRIDGE</div>
@@ -955,6 +1350,7 @@ export default function NostoryBridge(){
           <a onClick={()=>scrollTo("book")}>Book</a>
           <a onClick={()=>scrollTo("menu")}>Menu</a>
           <a onClick={()=>scrollTo("regulars")}>Regulars</a>
+          <a onClick={()=>scrollTo("reviews")}>Reviews</a>
           <a onClick={()=>scrollTo("leaderboard")}>Leaderboard</a>
           <a onClick={()=>scrollTo("betting")}>Bets 🔜</a>
           <a href="https://x.com/nostoryboss" target="_blank" rel="noreferrer">@nostoryboss</a>
