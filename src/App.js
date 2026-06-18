@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+
 const TG_TOKEN   = "8939696398:AAF4219VOMCAMKPQvJ-FhJwXVzQW69rOU5A";
 const TG_CHAT_ID = "6336428728";
 const TG_API     = `https://api.telegram.org/bot${TG_TOKEN}`;
@@ -371,166 +372,43 @@ function LeaderboardSection({defaultPlayers, adminPin}){
 
                 {/* Info + chart */}
                 <div>
-                  <div style={{display:"flex",alignItems:"center",ntSize:"1rem",color:"#4caf50"}}>₦{parseInt(payout).toLocaleString()}</span>
-            </div>
-          )}
-          <div style={{marginTop:10,padding:"8px 12px",background:"rgba(201,146,42,0.08)",border:"1px solid rgba(201,146,42,0.2)",textAlign:"center",fontSize:"0.6rem",letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--gold-dim)"}}>
-            🔒 Pay at counter when betting opens
-          </div>
-        </div>
-      )}
-      <div style={{padding:"8px 18px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span style={{fontSize:"0.6rem",color:"var(--chalk)",opacity:0.6}}>₦{match.totalStaked.toLocaleString()} staked (preview)</span>
-        <div style={{display:"flex",gap:4,alignItems:"center"}}>
-          <div style={{width:6,height:6,borderRadius:"50%",background:"#4caf50",animation:"pulse 2s ease-in-out infinite"}}/>
-          <span style={{fontSize:"0.58rem",color:"#4caf50",letterSpacing:"0.1em",textTransform:"uppercase"}}>Upcoming</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── LEADERBOARD WITH COMMENTS + ADMIN EDIT ──────────────────────────────────
-function LeaderboardSection({defaultPlayers, adminPin}){
-  const [players,   setPlayers]   = useState(defaultPlayers);
-  const [comments,  setComments]  = useState({});
-  const [newComment,setNewComment]= useState({});
-  const [commenter, setCommenter] = useState({});
-  const [commentOpen,setCommentOpen]= useState(null);
-  const [adminMode, setAdminMode] = useState(false);
-  const [pinInput,  setPinInput]  = useState("");
-  const [pinError,  setPinError]  = useState(false);
-  const [showAdmin, setShowAdmin] = useState(false);
-  const [saved,     setSaved]     = useState(false);
-  const [loading,   setLoading]   = useState(true);
-  const [postFlash, setPostFlash] = useState(null);
-
-  React.useEffect(()=>{
-    async function load(){
-      try{
-        const pr=await window.storage.get("nb_players");
-        if(pr) setPlayers(JSON.parse(pr.value));
-        const cr=await window.storage.get("nb_comments");
-        if(cr) setComments(JSON.parse(cr.value));
-      }catch(e){}
-      setLoading(false);
-    }
-    load();
-  },[]);
-
-  async function savePlayers(list){
-    const sorted=[...list].sort((a,b)=>b.wins-a.wins).map((p,i)=>({...p,rank:i+1}));
-    setPlayers(sorted);
-    try{ await window.storage.set("nb_players",JSON.stringify(sorted)); }catch(e){}
-    setSaved(true); setTimeout(()=>setSaved(false),2000);
-  }
-
-  async function saveComments(updated){
-    setComments(updated);
-    try{ await window.storage.set("nb_comments",JSON.stringify(updated)); }catch(e){}
-  }
-
-  function submitComment(playerName){
-    const text=(newComment[playerName]||"").trim();
-    if(!text) return;
-    const name=(commenter[playerName]||"").trim()||"Anonymous";
-    const c={name,text,time:new Date().toLocaleDateString("en-NG",{day:"numeric",month:"short"})};
-    const updated={...comments,[playerName]:[...(comments[playerName]||[]),c]};
-    saveComments(updated);
-    setNewComment(p=>({...p,[playerName]:""}));
-    setCommenter(p=>({...p,[playerName]:""}));
-    setPostFlash(playerName);
-    setTimeout(()=>setPostFlash(null),1500);
-  }
-
-  function deleteComment(playerName,idx){
-    const updated={...comments,[playerName]:comments[playerName].filter((_,i)=>i!==idx)};
-    saveComments(updated);
-  }
-
-  function tryAdminLogin(){
-    if(pinInput===adminPin){setAdminMode(true);setShowAdmin(false);setPinError(false);setPinInput("");}
-    else{setPinError(true);setTimeout(()=>setPinError(false),2000);}
-  }
-
-  function updatePlayer(idx,field,val){
-    setPlayers(prev=>prev.map((p,i)=>i===idx?{...p,[field]:field==="wins"||field==="games"?parseInt(val)||0:val}:p));
-  }
-
-  const MEDAL=["👑","🥈","🥉","4️⃣","5️⃣"];
-
-  if(loading) return(
-    <div style={{textAlign:"center",padding:40,color:"var(--gold)",fontSize:"0.8rem",letterSpacing:"0.2em"}}>
-      Loading leaderboard...
-    </div>
-  );
-
-  return(
-    <div>
-      {/* PLAYER CARDS */}
-      <div style={{display:"flex",flexDirection:"column",gap:12}}>
-        {players.map((p,idx)=>{
-          const pComments=comments[p.name]||[];
-          const isOpen=commentOpen===p.name;
-          const winRate=Math.round(p.wins/Math.max(p.games,1)*100);
-          return(
-            <div key={p.name+idx} style={{background:"var(--felt-mid)",border:`1px solid ${p.rank===1?"rgba(201,146,42,0.5)":"rgba(201,146,42,0.15)"}`,overflow:"hidden",transition:"all 0.2s"}}>
-
-              {/* PLAYER ROW */}
-              <div style={{display:"grid",gridTemplateColumns:"44px 1fr auto",alignItems:"center",gap:12,padding:"16px 18px"}}>
-
-                {/* Rank */}
-                <div style={{textAlign:"center"}}>
-                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:p.rank<=3?"1.8rem":"1.4rem",lineHeight:1,color:p.rank===1?"var(--gold-bright)":p.rank===2?"var(--chalk)":p.rank===3?"var(--brown-ball)":"var(--gold-dim)"}}>
-                    {p.rank<=3?MEDAL[p.rank-1]:p.rank}
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:3}}>
+                    <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1rem",fontWeight:600,color:"var(--cream)"}}>{p.name}</span>
+                    {p.rank===1&&<span style={{fontSize:"0.5rem",letterSpacing:"0.15em",background:"rgba(201,146,42,0.2)",color:"var(--gold)",padding:"2px 5px",textTransform:"uppercase"}}>CHAMPION</span>}
                   </div>
-                </div>
 
-                {/* Player info */}
-                <div>
-                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
-                    <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.05rem",fontWeight:600,color:"var(--cream)"}}>{p.name}</span>
-                    {p.rank===1&&<span style={{fontSize:"0.52rem",letterSpacing:"0.15em",background:"rgba(201,146,42,0.2)",color:"var(--gold)",padding:"2px 6px",textTransform:"uppercase"}}>CHAMPION</span>}
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                    <span style={{fontSize:"0.68rem",color:"var(--chalk)"}}>{p.wins}W · {p.games}G</span>
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <div style={{width:50,height:3,background:"var(--felt-light)",borderRadius:2,overflow:"hidden"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:6}}>
+                    <span style={{fontSize:"0.65rem",color:"var(--chalk)"}}>{p.wins}W · {p.games}G</span>
+                    <div style={{display:"flex",alignItems:"center",gap:5}}>
+                      <div style={{width:44,height:3,background:"var(--felt-light)",borderRadius:2,overflow:"hidden"}}>
                         <div style={{width:`${winRate}%`,height:"100%",background:"linear-gradient(90deg,var(--gold-dim),var(--gold-bright))"}}/>
                       </div>
-                      <span style={{fontSize:"0.62rem",color:"var(--gold)"}}>{winRate}%</span>
+                      <span style={{fontSize:"0.6rem",color:"var(--gold)"}}>{winRate}%</span>
                     </div>
                   </div>
 
-                  {/* Admin edit inline */}
+                  {/* Trend chart */}
+                  <TrendChart name={p.name} currentRank={p.rank}/>
+
+                  {/* Admin edit — separate component fixes keyboard */}
                   {adminMode&&(
-                    <div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 60px 60px",gap:6}}>
-                      <input value={p.name} onChange={e=>updatePlayer(idx,"name",e.target.value)}
-                        placeholder="Name"
-                        style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.3)",color:"var(--cream)",padding:"5px 8px",fontSize:"0.7rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
-                      <input type="number" value={p.wins} onChange={e=>updatePlayer(idx,"wins",e.target.value)}
-                        placeholder="W"
-                        style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.3)",color:"var(--cream)",padding:"5px 6px",fontSize:"0.7rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
-                      <input type="number" value={p.games} onChange={e=>updatePlayer(idx,"games",e.target.value)}
-                        placeholder="G"
-                        style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.3)",color:"var(--cream)",padding:"5px 6px",fontSize:"0.7rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
-                    </div>
+                    <AdminEditRow player={p} idx={idx} onUpdate={updatePlayer}/>
                   )}
                 </div>
 
-                {/* Comment button */}
+                {/* Comment + remove buttons */}
                 <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                   <button
                     onClick={()=>setCommentOpen(isOpen?null:p.name)}
-                    style={{background:isOpen?"rgba(201,146,42,0.2)":"rgba(201,146,42,0.08)",border:`1px solid ${isOpen?"var(--gold)":"rgba(201,146,42,0.25)"}`,color:isOpen?"var(--gold-bright)":"var(--chalk)",padding:"8px 12px",cursor:"pointer",fontSize:"0.65rem",letterSpacing:"0.1em",fontFamily:"monospace",display:"flex",flexDirection:"column",alignItems:"center",gap:3,minWidth:52,transition:"all 0.15s"}}>
-                    <span style={{fontSize:"1rem"}}>💬</span>
-                    <span style={{fontSize:"0.55rem",textTransform:"uppercase",letterSpacing:"0.15em"}}>
+                    style={{background:isOpen?"rgba(201,146,42,0.2)":"rgba(201,146,42,0.08)",border:`1px solid ${isOpen?"var(--gold)":"rgba(201,146,42,0.25)"}`,color:isOpen?"var(--gold-bright)":"var(--chalk)",padding:"8px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:46,transition:"all 0.15s"}}>
+                    <span style={{fontSize:"0.95rem"}}>💬</span>
+                    <span style={{fontSize:"0.52rem",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"monospace"}}>
                       {pComments.length>0?pComments.length:"Chat"}
                     </span>
                   </button>
                   {adminMode&&(
                     <button onClick={()=>{if(window.confirm(`Remove ${p.name}?`)) savePlayers(players.filter((_,i)=>i!==idx));}}
-                      style={{background:"rgba(192,57,43,0.15)",border:"1px solid rgba(192,57,43,0.3)",color:"#e57373",padding:"4px 8px",cursor:"pointer",fontSize:"0.6rem",fontFamily:"monospace"}}>
+                      style={{background:"rgba(192,57,43,0.15)",border:"1px solid rgba(192,57,43,0.3)",color:"#e57373",padding:"4px 8px",cursor:"pointer",fontSize:"0.58rem",fontFamily:"monospace"}}>
                       ✕ RM
                     </button>
                   )}
@@ -539,51 +417,47 @@ function LeaderboardSection({defaultPlayers, adminPin}){
 
               {/* COMMENT PANEL */}
               {isOpen&&(
-                <div style={{borderTop:"1px solid rgba(201,146,42,0.12)",background:"rgba(0,0,0,0.25)",padding:"16px 18px"}}>
-
-                  {/* Existing comments */}
+                <div style={{borderTop:"1px solid rgba(201,146,42,0.12)",background:"rgba(0,0,0,0.25)",padding:"14px 16px"}}>
                   {pComments.length===0&&(
-                    <div style={{fontSize:"0.72rem",color:"var(--chalk)",opacity:0.5,fontStyle:"italic",marginBottom:14,textAlign:"center",padding:"8px 0"}}>
-                      No comments yet — be the first to hype {p.name}! 🎱
+                    <div style={{fontSize:"0.7rem",color:"var(--chalk)",opacity:0.5,fontStyle:"italic",marginBottom:12,textAlign:"center"}}>
+                      No comments yet — be first to hype {p.name}! 🎱
                     </div>
                   )}
                   {pComments.length>0&&(
-                    <div style={{marginBottom:14,display:"flex",flexDirection:"column",gap:8,maxHeight:200,overflowY:"auto"}}>
+                    <div style={{marginBottom:12,display:"flex",flexDirection:"column",gap:7,maxHeight:180,overflowY:"auto"}}>
                       {pComments.map((c,ci)=>(
-                        <div key={ci} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(201,146,42,0.1)",padding:"10px 12px",borderRadius:2}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                            <span style={{fontSize:"0.68rem",color:"var(--gold-bright)",fontWeight:600}}>{c.name}</span>
+                        <div key={ci} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(201,146,42,0.1)",padding:"9px 11px"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                            <span style={{fontSize:"0.67rem",color:"var(--gold-bright)",fontWeight:600}}>{c.name}</span>
                             <div style={{display:"flex",alignItems:"center",gap:8}}>
-                              <span style={{fontSize:"0.58rem",color:"var(--chalk)",opacity:0.45}}>{c.time}</span>
+                              <span style={{fontSize:"0.57rem",color:"var(--chalk)",opacity:0.45}}>{c.time}</span>
                               {adminMode&&(
                                 <button onClick={()=>deleteComment(p.name,ci)}
-                                  style={{background:"none",border:"none",color:"#e57373",cursor:"pointer",fontSize:"0.75rem",padding:0,lineHeight:1}}>✕</button>
+                                  style={{background:"none",border:"none",color:"#e57373",cursor:"pointer",fontSize:"0.75rem",padding:0}}>✕</button>
                               )}
                             </div>
                           </div>
-                          <div style={{fontSize:"0.73rem",color:"var(--chalk)",lineHeight:1.55}}>{c.text}</div>
+                          <div style={{fontSize:"0.72rem",color:"var(--chalk)",lineHeight:1.5}}>{c.text}</div>
                         </div>
                       ))}
                     </div>
                   )}
-
-                  {/* Post comment form */}
-                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <div style={{display:"flex",flexDirection:"column",gap:7}}>
                     <input
                       placeholder="Your name (optional)"
                       value={commenter[p.name]||""}
                       onChange={e=>setCommenter(prev=>({...prev,[p.name]:e.target.value}))}
-                      style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.2)",color:"var(--cream)",padding:"9px 12px",fontSize:"0.73rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
-                    <div style={{display:"flex",gap:8}}>
+                      style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.2)",color:"var(--cream)",padding:"8px 11px",fontSize:"0.72rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
+                    <div style={{display:"flex",gap:7}}>
                       <input
                         placeholder={`Say something about ${p.name}...`}
                         value={newComment[p.name]||""}
                         onChange={e=>setNewComment(prev=>({...prev,[p.name]:e.target.value}))}
                         onKeyDown={e=>e.key==="Enter"&&submitComment(p.name)}
-                        style={{flex:1,background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.2)",color:"var(--cream)",padding:"9px 12px",fontSize:"0.73rem",fontFamily:"monospace",outline:"none",minWidth:0}}/>
+                        style={{flex:1,background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.2)",color:"var(--cream)",padding:"8px 11px",fontSize:"0.72rem",fontFamily:"monospace",outline:"none",minWidth:0}}/>
                       <button
                         onClick={()=>submitComment(p.name)}
-                        style={{background:postFlash===p.name?"#4caf50":"var(--gold)",color:"#0a0a0a",border:"none",padding:"9px 18px",fontSize:"0.68rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.1em",whiteSpace:"nowrap",flexShrink:0,transition:"background 0.2s"}}>
+                        style={{background:postFlash===p.name?"#4caf50":"var(--gold)",color:"#0a0a0a",border:"none",padding:"8px 16px",fontSize:"0.67rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.1em",whiteSpace:"nowrap",flexShrink:0,transition:"background 0.2s"}}>
                         {postFlash===p.name?"✓ SENT":"POST"}
                       </button>
                     </div>
@@ -595,29 +469,28 @@ function LeaderboardSection({defaultPlayers, adminPin}){
         })}
       </div>
 
-      {/* FOOTER BAR */}
-      <div style={{marginTop:16,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
-        <div style={{padding:"12px 16px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.12)",fontSize:"0.7rem",color:"var(--chalk)",display:"flex",gap:10,alignItems:"center",flex:1,minWidth:200}}>
-          <span>🎱</span><span>Tap 💬 on any player to comment. Leaderboard updates every Monday.</span>
+      {/* FOOTER */}
+      <div style={{marginTop:14,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+        <div style={{padding:"11px 14px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.12)",fontSize:"0.68rem",color:"var(--chalk)",display:"flex",gap:9,alignItems:"center",flex:1,minWidth:180}}>
+          <span>🎱</span><span>Tap 💬 to comment. Chart shows 6-week rank trend.</span>
         </div>
-
         {!adminMode?(
           <button onClick={()=>setShowAdmin(s=>!s)}
-            style={{background:"rgba(201,146,42,0.07)",border:"1px solid rgba(201,146,42,0.18)",color:"var(--gold-dim)",padding:"10px 16px",fontSize:"0.6rem",cursor:"pointer",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+            style={{background:"rgba(201,146,42,0.07)",border:"1px solid rgba(201,146,42,0.18)",color:"var(--gold-dim)",padding:"9px 14px",fontSize:"0.58rem",cursor:"pointer",letterSpacing:"0.15em",textTransform:"uppercase",fontFamily:"monospace",whiteSpace:"nowrap"}}>
             🔐 Admin
           </button>
         ):(
           <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
             <button onClick={()=>setPlayers(prev=>[...prev,{rank:prev.length+1,name:"New Player",wins:0,games:0,title:""}])}
-              style={{background:"rgba(76,175,80,0.12)",border:"1px solid rgba(76,175,80,0.3)",color:"#4caf50",padding:"9px 14px",fontSize:"0.62rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.08em"}}>
+              style={{background:"rgba(76,175,80,0.12)",border:"1px solid rgba(76,175,80,0.3)",color:"#4caf50",padding:"8px 12px",fontSize:"0.6rem",cursor:"pointer",fontFamily:"monospace"}}>
               + ADD
             </button>
             <button onClick={()=>savePlayers(players)}
-              style={{background:saved?"#4caf50":"var(--gold)",color:"#0a0a0a",border:"none",padding:"9px 16px",fontSize:"0.62rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.08em",transition:"background 0.2s"}}>
+              style={{background:saved?"#4caf50":"var(--gold)",color:"#0a0a0a",border:"none",padding:"8px 14px",fontSize:"0.6rem",cursor:"pointer",fontFamily:"monospace",transition:"background 0.2s"}}>
               {saved?"✓ SAVED":"💾 SAVE"}
             </button>
             <button onClick={()=>setAdminMode(false)}
-              style={{background:"rgba(192,57,43,0.1)",border:"1px solid rgba(192,57,43,0.2)",color:"#e57373",padding:"9px 14px",fontSize:"0.62rem",cursor:"pointer",fontFamily:"monospace"}}>
+              style={{background:"rgba(192,57,43,0.1)",border:"1px solid rgba(192,57,43,0.2)",color:"#e57373",padding:"8px 12px",fontSize:"0.6rem",cursor:"pointer",fontFamily:"monospace"}}>
               EXIT
             </button>
           </div>
@@ -626,26 +499,27 @@ function LeaderboardSection({defaultPlayers, adminPin}){
 
       {/* PIN LOGIN */}
       {showAdmin&&!adminMode&&(
-        <div style={{marginTop:12,padding:"16px 18px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.25)"}}>
-          <div style={{fontSize:"0.62rem",color:"var(--gold)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:10}}>🔐 Admin PIN</div>
+        <div style={{marginTop:10,padding:"14px 16px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.25)"}}>
+          <div style={{fontSize:"0.6rem",color:"var(--gold)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:9}}>🔐 Admin PIN</div>
           <div style={{display:"flex",gap:8}}>
             <input type="password" placeholder="Enter PIN"
               value={pinInput} onChange={e=>setPinInput(e.target.value)}
               onKeyDown={e=>e.key==="Enter"&&tryAdminLogin()}
-              style={{flex:1,background:"var(--felt-light)",border:`1px solid ${pinError?"var(--red-ball)":"rgba(201,146,42,0.3)"}`,color:"var(--cream)",padding:"11px 14px",fontSize:"1rem",fontFamily:"monospace",outline:"none",letterSpacing:"0.3em"}}/>
+              style={{flex:1,background:"var(--felt-light)",border:`1px solid ${pinError?"var(--red-ball)":"rgba(201,146,42,0.3)"}`,color:"var(--cream)",padding:"10px 13px",fontSize:"1rem",fontFamily:"monospace",outline:"none",letterSpacing:"0.3em"}}/>
             <button onClick={tryAdminLogin}
-              style={{background:"var(--gold)",color:"#0a0a0a",border:"none",padding:"11px 22px",fontSize:"0.7rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.1em"}}>
+              style={{background:"var(--gold)",color:"#0a0a0a",border:"none",padding:"10px 20px",fontSize:"0.68rem",cursor:"pointer",fontFamily:"monospace",letterSpacing:"0.1em"}}>
               ENTER
             </button>
           </div>
-          {pinError&&<div style={{fontSize:"0.65rem",color:"#e57373",marginTop:6}}>❌ Wrong PIN. Try again.</div>}
-          <div style={{fontSize:"0.56rem",color:"var(--chalk)",opacity:0.4,marginTop:8}}>Owner access only</div>
+          {pinError&&<div style={{fontSize:"0.63rem",color:"#e57373",marginTop:5}}>❌ Wrong PIN.</div>}
+          <div style={{fontSize:"0.54rem",color:"var(--chalk)",opacity:0.4,marginTop:7}}>Owner access only</div>
         </div>
       )}
     </div>
   );
 }
 // ─────────────────────────────────────────────────────────────────────────────
+
 
 export default function NostoryBridge(){
   const [marbleQty,setMarbleQty]=useState(0);
@@ -1484,12 +1358,12 @@ export default function NostoryBridge(){
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:20,marginBottom:40}}>
           {[
-            {p1:"Oju Igo",p2:"Steady",odds1:1.8,odds2:2.1,date:"Sat 14 Jun",time:"4:00 PM",board:"Marble",totalStaked:3200},
-            {p1:"Big Israel",p2:"Saouty",odds1:2.4,odds2:1.6,date:"Sat 14 Jun",time:"5:30 PM",board:"Wooden",totalStaked:1800},
-            {p1:"Stand Fit",p2:"Apata",odds1:1.5,odds2:2.8,date:"Sun 15 Jun",time:"3:00 PM",board:"Marble",totalStaked:2600},
-            {p1:"Ighe Nation",p2:"Ebuka",odds1:2.2,odds2:1.7,date:"Sun 15 Jun",time:"6:00 PM",board:"Wooden",totalStaked:900},
-            {p1:"Eddy",p2:"Oju Igo",odds1:1.9,odds2:2.0,date:"Mon 16 Jun",time:"4:00 PM",board:"Marble",totalStaked:1400},
-            {p1:"Steady",p2:"Big Israel",odds1:1.6,odds2:2.3,date:"Mon 16 Jun",time:"7:00 PM",board:"Wooden",totalStaked:2100},
+            {p1:"Oju Igo",p2:"Steady",odds1:2.1,odds2:1.7,date:"Sat 21 Jun",time:"4:00 PM",board:"Marble",totalStaked:5800},
+            {p1:"Steady",p2:"Stand Fit",odds1:1.5,odds2:2.6,date:"Sat 21 Jun",time:"5:30 PM",board:"Wooden",totalStaked:2800},
+            {p1:"Stand Fit",p2:"Big Israel",odds1:1.7,odds2:2.1,date:"Sun 22 Jun",time:"3:00 PM",board:"Marble",totalStaked:1900},
+            {p1:"Ighe Nation",p2:"Ebuka",odds1:2.2,odds2:1.7,date:"Sun 22 Jun",time:"6:00 PM",board:"Wooden",totalStaked:900},
+            {p1:"Eddy",p2:"Saouty",odds1:2.1,odds2:1.8,date:"Mon 23 Jun",time:"4:00 PM",board:"Marble",totalStaked:1100},
+            {p1:"Big Israel",p2:"Oju Igo",odds1:2.5,odds2:1.5,date:"Mon 23 Jun",time:"7:00 PM",board:"Wooden",totalStaked:3600},
           ].map((m,i)=><MatchCard key={i} match={m}/>)}
         </div>
         <div style={{background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.2)",padding:"40px 32px",textAlign:"center",position:"relative",overflow:"hidden"}}>
