@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+
 const TG_TOKEN   = "8939696398:AAF4219VOMCAMKPQvJ-FhJwXVzQW69rOU5A";
 const TG_CHAT_ID = "6336428728";
 const TG_API     = `https://api.telegram.org/bot${TG_TOKEN}`;
@@ -28,19 +29,19 @@ const MENU_DATA = {
 
 // #1 — Real player names from Nostory Bridge regulars
 const LEADERBOARD = [
-  {rank:1,name:"Oju Igo",   wins:47,games:52,title:"Champion"},
-  {rank:2,name:"Stand Fit", wins:44,games:50,title:"Runner Up"},
-  {rank:3,name:"Big Israel",wins:38,games:44,title:"Top 3"},
-  {rank:4,name:"Steady",    wins:31,games:40,title:"Top 4"},
-  {rank:5,name:"Saouty",    wins:24,games:32,title:"Top 5"},
+  {rank:1,name:"Oju Igo",   wins:55,games:63,title:"Champion"},
+  {rank:2,name:"Steady",    wins:59,games:70,title:"Runner Up"},
+  {rank:3,name:"Stand Fit", wins:44,games:54,title:"Top 3"},
+  {rank:4,name:"Big Israel",wins:38,games:50,title:"Top 4"},
+  {rank:5,name:"Saouty",    wins:24,games:34,title:"Top 5"},
 ];
 
 const REGULARS = [
-  {name:"Oju Igo",    emoji:"👑",stat:"47W · 52G",note:"The one to beat"},
-  {name:"Steady",     emoji:"🎯",stat:"31W · 40G",note:"Consistent potting"},
-  {name:"Big Israel", emoji:"💪",stat:"38W · 44G",note:"Power player"},
-  {name:"Saouty",     emoji:"⚡",stat:"24W · 32G",note:"Fast breaks"},
-  {name:"Stand Fit",  emoji:"🔥",stat:"44W · 50G",note:"Elite level — Oju Igo's equal"},
+  {name:"Oju Igo",    emoji:"👑",stat:"55W · 63G",note:"Champion — but Steady is coming"},
+  {name:"Steady",     emoji:"🎯",stat:"59W · 70G",note:"🔥 Beat Oju Igo — on fire right now"},
+  {name:"Big Israel", emoji:"💪",stat:"38W · 50G",note:"Power player"},
+  {name:"Saouty",     emoji:"⚡",stat:"24W · 34G",note:"Fast breaks"},
+  {name:"Stand Fit",  emoji:"🔥",stat:"44W · 54G",note:"Elite level — hungry for #2"},
   {name:"Apata",      emoji:"🎱",stat:"14W · 22G",note:"Sharp cue action"},
   {name:"Ighe Nation",emoji:"🏆",stat:"12W · 20G",note:"Tournament ready"},
   {name:"Ebuka",      emoji:"🎮",stat:"10W · 18G",note:"Always in the mix"},
@@ -153,6 +154,225 @@ function MatchCard({match}){
             <div style={{marginTop:8,display:"flex",justifyContent:"space-between",fontSize:"0.7rem"}}>
               <span style={{color:"var(--chalk)"}}>Potential win</span>
               <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1rem",color:"#4caf50"}}>₦{parseInt(payout).toLocaleString()}</span>
+            </div>
+          )}
+          <div style={{marginTop:10,padding:"8px 12px",background:"rgba(201,146,42,0.08)",border:"1px solid rgba(201,146,42,0.2)",textAlign:"center",fontSize:"0.6rem",letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--gold-dim)"}}>
+            🔒 Pay at counter when betting opens
+          </div>
+        </div>
+      )}
+      <div style={{padding:"8px 18px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{fontSize:"0.6rem",color:"var(--chalk)",opacity:0.6}}>₦{match.totalStaked.toLocaleString()} staked (preview)</span>
+        <div style={{display:"flex",gap:4,alignItems:"center"}}>
+          <div style={{width:6,height:6,borderRadius:"50%",background:"#4caf50",animation:"pulse 2s ease-in-out infinite"}}/>
+          <span style={{fontSize:"0.58rem",color:"#4caf50",letterSpacing:"0.1em",textTransform:"uppercase"}}>Upcoming</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── LEADERBOARD WITH COMMENTS + ADMIN EDIT + TREND CHART ────────────────────
+// Rise/fall history — last 6 weeks rank positions per player
+const RANK_HISTORY = {
+  "Oju Igo":    [1,1,1,1,1,1],
+  "Steady":     [5,4,4,3,3,2],
+  "Stand Fit":  [2,2,2,2,2,3],
+  "Big Israel": [3,3,3,3,4,4],
+  "Saouty":     [4,5,5,5,5,5],
+  "Apata":      [6,6,6,6,6,6],
+  "Ighe Nation":[7,7,7,7,7,7],
+  "Ebuka":      [8,8,8,8,8,8],
+  "Eddy":       [9,9,9,9,9,9],
+};
+
+function TrendChart({name, currentRank}){
+  const history = RANK_HISTORY[name] || [currentRank,currentRank,currentRank,currentRank,currentRank,currentRank];
+  const W=80, H=28, pts=history.length;
+  const minR=1, maxR=Math.max(...history,currentRank);
+  // lower rank number = higher position on chart
+  const toY = r => Math.round(((r-minR)/(Math.max(maxR-minR,1)))*( H-6))+3;
+  const allPts=[...history,currentRank];
+  const coords=allPts.map((r,i)=>({x:Math.round(i*(W-8)/(allPts.length-1))+4, y:toY(r)}));
+  const pathD=coords.map((c,i)=>`${i===0?"M":"L"}${c.x},${c.y}`).join(" ");
+  const first=history[0], last=currentRank;
+  const trend = last < first ? "up" : last > first ? "down" : "flat";
+  const color = trend==="up"?"#4caf50":trend==="down"?"#e74c3c":"#f0b84a";
+  const arrow = trend==="up"?"↑":trend==="down"?"↓":"→";
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <svg width={W} height={H} style={{overflow:"visible"}}>
+        <defs>
+          <linearGradient id={`g${name.replace(/\s/g,"")}`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={color} stopOpacity="0.3"/>
+            <stop offset="100%" stopColor={color} stopOpacity="1"/>
+          </linearGradient>
+        </defs>
+        {/* Grid lines */}
+        {[0,H/2,H].map(y=>(
+          <line key={y} x1="0" y1={y} x2={W} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1"/>
+        ))}
+        {/* Trend line */}
+        <path d={pathD} fill="none" stroke={`url(#g${name.replace(/\s/g,"")})`} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        {/* Current dot */}
+        <circle cx={coords[coords.length-1].x} cy={coords[coords.length-1].y} r="3" fill={color}/>
+      </svg>
+      <span style={{fontSize:"0.75rem",color,fontWeight:"bold",minWidth:14}}>{arrow}</span>
+    </div>
+  );
+}
+
+function AdminEditRow({player, idx, onUpdate}){
+  // Separate component = stable key = keyboard stays open
+  const [local, setLocal] = useState({name:player.name, wins:player.wins, games:player.games});
+  const flushed = useRef(false);
+
+  function change(field,val){
+    const updated = {...local,[field]:val};
+    setLocal(updated);
+    // propagate numeric fields immediately, string fields on blur
+    if(field!=="name") onUpdate(idx,field,val);
+  }
+  function blur(field){
+    onUpdate(idx,field,local[field]);
+  }
+  // Sync if player prop changes from outside
+  React.useEffect(()=>{
+    setLocal({name:player.name,wins:player.wins,games:player.games});
+  },[player.wins,player.games]);
+
+  return(
+    <div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 60px 60px",gap:6}}>
+      <input
+        value={local.name}
+        onChange={e=>change("name",e.target.value)}
+        onBlur={()=>blur("name")}
+        placeholder="Name"
+        style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.3)",color:"var(--cream)",padding:"6px 8px",fontSize:"0.72rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
+      <input
+        type="number" value={local.wins}
+        onChange={e=>change("wins",e.target.value)}
+        placeholder="W"
+        style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.3)",color:"var(--cream)",padding:"6px 6px",fontSize:"0.72rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
+      <input
+        type="number" value={local.games}
+        onChange={e=>change("games",e.target.value)}
+        placeholder="G"
+        style={{background:"var(--felt-light)",border:"1px solid rgba(201,146,42,0.3)",color:"var(--cream)",padding:"6px 6px",fontSize:"0.72rem",fontFamily:"monospace",outline:"none",width:"100%"}}/>
+    </div>
+  );
+}
+
+function LeaderboardSection({defaultPlayers, adminPin}){
+  const [players,    setPlayers]    = useState(defaultPlayers);
+  const [comments,   setComments]   = useState({});
+  const [newComment, setNewComment] = useState({});
+  const [commenter,  setCommenter]  = useState({});
+  const [commentOpen,setCommentOpen]= useState(null);
+  const [adminMode,  setAdminMode]  = useState(false);
+  const [pinInput,   setPinInput]   = useState("");
+  const [pinError,   setPinError]   = useState(false);
+  const [showAdmin,  setShowAdmin]  = useState(false);
+  const [saved,      setSaved]      = useState(false);
+  const [loading,    setLoading]    = useState(true);
+  const [postFlash,  setPostFlash]  = useState(null);
+
+  React.useEffect(()=>{
+    async function load(){
+      try{
+        const pr=await window.storage.get("nb_players");
+        if(pr) setPlayers(JSON.parse(pr.value));
+        const cr=await window.storage.get("nb_comments");
+        if(cr) setComments(JSON.parse(cr.value));
+      }catch(e){}
+      setLoading(false);
+    }
+    load();
+  },[]);
+
+  async function savePlayers(list){
+    const sorted=[...list].sort((a,b)=>b.wins-a.wins).map((p,i)=>({...p,rank:i+1}));
+    setPlayers(sorted);
+    try{ await window.storage.set("nb_players",JSON.stringify(sorted)); }catch(e){}
+    setSaved(true); setTimeout(()=>setSaved(false),2000);
+  }
+
+  async function saveComments(updated){
+    setComments(updated);
+    try{ await window.storage.set("nb_comments",JSON.stringify(updated)); }catch(e){}
+  }
+
+  function submitComment(playerName){
+    const text=(newComment[playerName]||"").trim();
+    if(!text) return;
+    const name=(commenter[playerName]||"").trim()||"Anonymous";
+    const c={name,text,time:new Date().toLocaleDateString("en-NG",{day:"numeric",month:"short"})};
+    const updated={...comments,[playerName]:[...(comments[playerName]||[]),c]};
+    saveComments(updated);
+    setNewComment(p=>({...p,[playerName]:""}));
+    setCommenter(p=>({...p,[playerName]:""}));
+    setPostFlash(playerName);
+    setTimeout(()=>setPostFlash(null),1500);
+  }
+
+  function deleteComment(playerName,idx){
+    const updated={...comments,[playerName]:comments[playerName].filter((_,i)=>i!==idx)};
+    saveComments(updated);
+  }
+
+  function tryAdminLogin(){
+    if(pinInput===adminPin){setAdminMode(true);setShowAdmin(false);setPinError(false);setPinInput("");}
+    else{setPinError(true);setTimeout(()=>setPinError(false),2000);}
+  }
+
+  function updatePlayer(idx,field,val){
+    setPlayers(prev=>prev.map((p,i)=>i===idx?{...p,[field]:field==="wins"||field==="games"?parseInt(val)||0:val}:p));
+  }
+
+  const MEDAL=["👑","🥈","🥉","4️⃣","5️⃣"];
+
+  if(loading) return(
+    <div style={{textAlign:"center",padding:40,color:"var(--gold)",fontSize:"0.8rem",letterSpacing:"0.2em"}}>
+      Loading leaderboard...
+    </div>
+  );
+
+  return(
+    <div>
+      {/* TREND LEGEND */}
+      <div style={{display:"flex",gap:16,marginBottom:16,padding:"10px 14px",background:"rgba(0,0,0,0.2)",border:"1px solid rgba(201,146,42,0.1)",flexWrap:"wrap"}}>
+        <span style={{fontSize:"0.6rem",color:"var(--chalk)",opacity:0.6,letterSpacing:"0.1em",textTransform:"uppercase",marginRight:4}}>6-week trend:</span>
+        {[["↑ Rising","#4caf50"],["↓ Falling","#e74c3c"],["→ Stable","#f0b84a"]].map(([l,c])=>(
+          <div key={l} style={{display:"flex",alignItems:"center",gap:5}}>
+            <div style={{width:20,height:2,background:c,borderRadius:1}}/>
+            <span style={{fontSize:"0.62rem",color:c}}>{l}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* PLAYER CARDS */}
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {players.map((p,idx)=>{
+          const pComments=comments[p.name]||[];
+          const isOpen=commentOpen===p.name;
+          const winRate=Math.round(p.wins/Math.max(p.games,1)*100);
+          // Stable key using original index — fixes keyboard bug
+          return(
+            <div key={`player-${idx}`} style={{background:"var(--felt-mid)",border:`1px solid ${p.rank===1?"rgba(201,146,42,0.5)":"rgba(201,146,42,0.15)"}`,overflow:"hidden"}}>
+
+              {/* PLAYER ROW */}
+              <div style={{display:"grid",gridTemplateColumns:"40px 1fr auto",alignItems:"center",gap:10,padding:"14px 16px"}}>
+
+                {/* Rank */}
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:p.rank<=3?"1.7rem":"1.3rem",lineHeight:1,color:p.rank===1?"var(--gold-bright)":p.rank===2?"var(--chalk)":p.rank===3?"var(--brown-ball)":"var(--gold-dim)"}}>
+                    {p.rank<=5?MEDAL[p.rank-1]:p.rank}
+                  </div>
+                </div>
+
+                {/* Info + chart */}
+                <div>
+                  <div style={{display:"flex",alignItems:"center",ntSize:"1rem",color:"#4caf50"}}>₦{parseInt(payout).toLocaleString()}</span>
             </div>
           )}
           <div style={{marginTop:10,padding:"8px 12px",background:"rgba(201,146,42,0.08)",border:"1px solid rgba(201,146,42,0.2)",textAlign:"center",fontSize:"0.6rem",letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--gold-dim)"}}>
