@@ -1,10 +1,93 @@
 import React, { useState, useRef } from "react";
+import {
+  FaBars,
+  FaCheck,
+  FaCheckCircle,
+  FaEnvelope,
+  FaLock,
+  FaMapMarkerAlt,
+  FaPhoneAlt,
+  FaShareAlt,
+  FaTimes,
+  FaTrophy,
+  FaWhatsapp,
+} from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
+import {
+  GiBeerBottle,
+  GiChickenOven,
+  GiCoffeeCup,
+  GiEightBall,
+  GiFruitBowl,
+  GiHotSpices,
+  GiMeal,
+  GiSodaCan,
+  GiStoneBlock,
+  GiWaterBottle,
+  GiWoodBeam,
+  GiWrappedSweet,
+} from "react-icons/gi";
+import { MdLocalDrink, MdRestaurant } from "react-icons/md";
+import {
+  HeroSection,
+  HowItWorksSection,
+  Navigation,
+  TableAvailability,
+  TournamentBanner,
+} from "./components/HomeSections";
 
-const TG_TOKEN   = "8939696398:AAF4219VOMCAMKPQvJ-FhJwXVzQW69rOU5A";
-const TG_CHAT_ID = "6336428728";
-const TG_API     = `https://api.telegram.org/bot${TG_TOKEN}`;
 const WA_NUMBER  = "2348080236462";
 const MAX_FILE_MB = 5;
+
+const iconStyle = { display: "inline-block", verticalAlign: "-0.12em" };
+
+function InlineIcon({ children, style }) {
+  return <span style={{ ...iconStyle, ...style }}>{children}</span>;
+}
+
+function BoardIcon({ type }) {
+  return type === "wood" ? <GiWoodBeam /> : <GiStoneBlock />;
+}
+
+function StatusIcon({ type, style }) {
+  const icons = {
+    check: <FaCheckCircle />,
+    lock: <FaLock />,
+    sync: <FaCheck />,
+    trophy: <FaTrophy />,
+    ball: <GiEightBall />,
+    phone: <FaPhoneAlt />,
+    whatsapp: <FaWhatsapp />,
+    map: <FaMapMarkerAlt />,
+    mail: <FaEnvelope />,
+    x: <FaXTwitter />,
+    drink: <MdLocalDrink />,
+    food: <MdRestaurant />,
+  };
+
+  return <InlineIcon style={style}>{icons[type] || icons.ball}</InlineIcon>;
+}
+
+function MenuIcon({ item }) {
+  const icons = {
+    b1: <GiSodaCan />,
+    b2: <GiBeerBottle />,
+    b3: <GiSodaCan />,
+    b4: <GiBeerBottle />,
+    b5: <GiWaterBottle />,
+    b6: <GiHotSpices />,
+    b7: <GiCoffeeCup />,
+    b8: <GiFruitBowl />,
+    s1: <GiChickenOven />,
+    s2: <GiMeal />,
+    s3: <MdRestaurant />,
+    s4: <GiWrappedSweet />,
+    s5: <GiMeal />,
+    s6: <GiHotSpices />,
+  };
+
+  return icons[item.id] || <MdLocalDrink />;
+}
 
 const MENU_DATA = {
   beverages: [
@@ -49,11 +132,11 @@ const REGULARS = [
 ];
 
 const BOARDS = {
-  marble:{id:"marble",name:"Marble Board",tagline:"Premium · Polished Surface",icon:"🪨",
+  marble:{id:"marble",name:"Marble Board",tagline:"Premium · Polished Surface",icon:"marble",
     pricePerGame:500,freeEvery:5,freeCount:1,
     headerClass:"board-header-marble",activeClass:"active-marble",
     promoClass:"",nameClass:"board-name-marble"},
-  wood:{id:"wood",name:"Wooden Board",tagline:"Classic · Natural Grain",icon:"🪵",
+  wood:{id:"wood",name:"Wooden Board",tagline:"Classic · Natural Grain",icon:"wood",
     pricePerGame:500,freeEvery:5,freeCount:2,
     headerClass:"board-header-wood",activeClass:"active-wood",
     promoClass:"promo-badge-wood",nameClass:"board-name-wood"},
@@ -83,9 +166,9 @@ function BoardCard({board,qty,onChange}){
   const isActive=qty>0;
   return(
     <div className={`board-card ${isActive?board.activeClass:""}`}>
-      {isActive&&<div className="active-check">✓</div>}
+      {isActive&&<div className="active-check"><FaCheck /></div>}
       <div className={board.headerClass}>
-        <div className="board-icon">{board.icon}</div>
+        <div className="board-icon"><BoardIcon type={board.icon} /></div>
         <div className={`board-name ${board.nameClass}`}>{board.name}</div>
         <div className="board-tagline">{board.tagline}</div>
       </div>
@@ -95,7 +178,7 @@ function BoardCard({board,qty,onChange}){
           <div className="price-unit">per game / coin</div>
         </div>
         <div className={`promo-badge ${board.promoClass}`}>
-          🎁 {board.freeCount} free game{board.freeCount>1?"s":""} every {board.freeEvery} ordered
+          <FaTrophy style={iconStyle} /> {board.freeCount} free game{board.freeCount>1?"s":""} every {board.freeEvery} ordered
         </div>
         <div className="gc-label">Games to order</div>
         <div className="gc-controls">
@@ -129,13 +212,13 @@ function MatchCard({match}){
       </div>
       <div style={{padding:"20px 18px 14px",display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,alignItems:"center"}}>
         <button onClick={()=>setPicked(picked===1?null:1)} style={{background:picked===1?"rgba(201,146,42,0.18)":"rgba(0,0,0,0.2)",border:picked===1?"1px solid var(--gold)":"1px solid rgba(201,146,42,0.15)",padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",textAlign:"center"}}>
-          <div style={{fontSize:"1.4rem",marginBottom:6}}>🎱</div>
+          <div style={{fontSize:"1.4rem",marginBottom:6}}><GiEightBall /></div>
           <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"0.95rem",fontWeight:600,color:picked===1?"var(--gold-bright)":"var(--cream)",marginBottom:6}}>{match.p1}</div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.4rem",color:picked===1?"var(--gold-bright)":"var(--chalk)",letterSpacing:"0.05em"}}>{match.odds1}x</div>
         </button>
         <div style={{textAlign:"center"}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.1rem",color:"var(--gold-dim)",letterSpacing:"0.1em"}}>VS</div></div>
         <button onClick={()=>setPicked(picked===2?null:2)} style={{background:picked===2?"rgba(201,146,42,0.18)":"rgba(0,0,0,0.2)",border:picked===2?"1px solid var(--gold)":"1px solid rgba(201,146,42,0.15)",padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",textAlign:"center"}}>
-          <div style={{fontSize:"1.4rem",marginBottom:6}}>🎱</div>
+          <div style={{fontSize:"1.4rem",marginBottom:6}}><GiEightBall /></div>
           <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"0.95rem",fontWeight:600,color:picked===2?"var(--gold-bright)":"var(--cream)",marginBottom:6}}>{match.p2}</div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.4rem",color:picked===2?"var(--gold-bright)":"var(--chalk)",letterSpacing:"0.05em"}}>{match.odds2}x</div>
         </button>
@@ -157,7 +240,7 @@ function MatchCard({match}){
             </div>
           )}
           <div style={{marginTop:10,padding:"8px 12px",background:"rgba(201,146,42,0.08)",border:"1px solid rgba(201,146,42,0.2)",textAlign:"center",fontSize:"0.6rem",letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--gold-dim)"}}>
-            🔒 Pay at counter when betting opens
+            <FaLock style={iconStyle} /> Pay at counter when betting opens
           </div>
         </div>
       )}
@@ -401,7 +484,7 @@ function LeaderboardSection({defaultPlayers, adminPin}){
                   <button
                     onClick={()=>setCommentOpen(isOpen?null:p.name)}
                     style={{background:isOpen?"rgba(201,146,42,0.2)":"rgba(201,146,42,0.08)",border:`1px solid ${isOpen?"var(--gold)":"rgba(201,146,42,0.25)"}`,color:isOpen?"var(--gold-bright)":"var(--chalk)",padding:"8px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:46,transition:"all 0.15s"}}>
-                    <span style={{fontSize:"0.95rem"}}>💬</span>
+                    <FaWhatsapp style={{fontSize:"0.95rem"}} />
                     <span style={{fontSize:"0.52rem",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"monospace"}}>
                       {pComments.length>0?pComments.length:"Chat"}
                     </span>
@@ -409,7 +492,7 @@ function LeaderboardSection({defaultPlayers, adminPin}){
                   {adminMode&&(
                     <button onClick={()=>{if(window.confirm(`Remove ${p.name}?`)) savePlayers(players.filter((_,i)=>i!==idx));}}
                       style={{background:"rgba(192,57,43,0.15)",border:"1px solid rgba(192,57,43,0.3)",color:"#e57373",padding:"4px 8px",cursor:"pointer",fontSize:"0.58rem",fontFamily:"monospace"}}>
-                      ✕ RM
+                      <FaTimes style={iconStyle} /> RM
                     </button>
                   )}
                 </div>
@@ -433,7 +516,7 @@ function LeaderboardSection({defaultPlayers, adminPin}){
                               <span style={{fontSize:"0.57rem",color:"var(--chalk)",opacity:0.45}}>{c.time}</span>
                               {adminMode&&(
                                 <button onClick={()=>deleteComment(p.name,ci)}
-                                  style={{background:"none",border:"none",color:"#e57373",cursor:"pointer",fontSize:"0.75rem",padding:0}}>✕</button>
+                                  style={{background:"none",border:"none",color:"#e57373",cursor:"pointer",fontSize:"0.75rem",padding:0}}><FaTimes /></button>
                               )}
                             </div>
                           </div>
@@ -472,7 +555,7 @@ function LeaderboardSection({defaultPlayers, adminPin}){
       {/* FOOTER */}
       <div style={{marginTop:14,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
         <div style={{padding:"11px 14px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.12)",fontSize:"0.68rem",color:"var(--chalk)",display:"flex",gap:9,alignItems:"center",flex:1,minWidth:180}}>
-          <span>🎱</span><span>Tap 💬 to comment. Chart shows 6-week rank trend.</span>
+          <span><GiEightBall /></span><span>Tap the comment button to comment. Chart shows 6-week rank trend.</span>
         </div>
         {!adminMode?(
           <button onClick={()=>setShowAdmin(s=>!s)}
@@ -609,69 +692,21 @@ export default function NostoryBridge(){
     const snapMQty=marbleQty;
     const snapWQty=woodQty;
     const snapTotal=totalCost;
-    const snapFile=screenshot;
+    const mc=calcGames(BOARDS.marble,snapMQty);
+    const wc=calcGames(BOARDS.wood,snapWQty);
+    const waText=buildWaText(snapName,snapPhone,snapDate,snapTime,snapMQty,snapWQty,snapTotal);
+    const waLink=`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waText)}`;
 
-    setSendStatus("sending");
-
-    try{
-      const mc=calcGames(BOARDS.marble,snapMQty);
-      const wc=calcGames(BOARDS.wood,snapWQty);
-
-      const text=[
-        "🎱 *NEW BOOKING — NOSTORY BRIDGE*",
-        "",
-        `🎫 *Ref:* ${bookingRef}`,
-        `👤 *Name:* ${snapName}`,
-        `📞 *Phone:* ${snapPhone||"Not provided"}`,
-        `📅 *Date:* ${snapDate}`,
-        `🕐 *Time:* ${snapTime}`,
-        "",
-        "📋 *ORDER*",
-        snapMQty>0?`🪨 Marble Board: ${mc.paid} paid + ${mc.free} free = *${mc.total} games*`:null,
-        snapWQty>0?`🪵 Wooden Board: ${wc.paid} paid + ${wc.free} free = *${wc.total} games*`:null,
-        "",
-        `💰 *Total: ₦${snapTotal.toLocaleString()}*`,
-        "",
-        "📸 _Payment screenshot below_",
-      ].filter(Boolean).join("\n");
-
-      const msgRes=await fetch(`${TG_API}/sendMessage`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({chat_id:TG_CHAT_ID,text,parse_mode:"Markdown"}),
-      });
-      if(!msgRes.ok) throw new Error("Message failed");
-
-      const fd=new FormData();
-      fd.append("chat_id",TG_CHAT_ID);
-      fd.append("photo",snapFile,snapFile.name);
-      fd.append("caption",`Payment proof — ${snapName} · ₦${snapTotal.toLocaleString()}`);
-      const photoRes=await fetch(`${TG_API}/sendPhoto`,{method:"POST",body:fd});
-
-      if(!photoRes.ok){
-        const fd2=new FormData();
-        fd2.append("chat_id",TG_CHAT_ID);
-        fd2.append("document",snapFile,snapFile.name);
-        fd2.append("caption",`Payment proof — ${snapName} · ₦${snapTotal.toLocaleString()}`);
-        await fetch(`${TG_API}/sendDocument`,{method:"POST",body:fd2});
-      }
-
-      const waConfirmText=encodeURIComponent(`Hi ${snapName}! Your Nostory Bridge booking is confirmed 🎱\n\n${snapMQty>0?`🪨 Marble: ${mc.total} games\n`:""}${snapWQty>0?`🪵 Wooden: ${wc.total} games\n`:""}\nDate: ${snapDate} at ${snapTime}\nTotal paid: ₦${snapTotal.toLocaleString()}\n\nSee you at the table!`);
-
-      setSendStatus("success");
-      setSuccessMsg({
-        title:"Booking Confirmed! 🎉",
-        sub:`Thank you, ${snapName}!\n\nYour booking and payment proof have been sent to Nostory Bridge.\n\n${snapMQty>0?`🪨 Marble Board: ${mc.paid} paid + ${mc.free} free = ${mc.total} games\n`:""}${snapWQty>0?`🪵 Wooden Board: ${wc.paid} paid + ${wc.free} free = ${wc.total} games\n`:""}\nTotal: ₦${snapTotal.toLocaleString()}\nDate: ${snapDate} at ${snapTime}\n\nWe will confirm shortly!`,
-        waLink:`https://wa.me/${WA_NUMBER}?text=${waConfirmText}`,
-      });
-      setShowSuccess(true);
-      resetForm();
-      setSendStatus(null);
-    }catch(err){
-      console.error("Telegram error:",err);
-      setSendStatus("error");
-      window._nbFallback={snapName,snapPhone,snapDate,snapTime,snapMQty,snapWQty,snapTotal};
-    }
+    setSendStatus("success");
+    setSuccessMsg({
+      title:"Booking Ready",
+      sub:`Thank you, ${snapName}!\n\nYour booking details are ready. Send them on WhatsApp, then attach your payment screenshot there.\n\n${snapMQty>0?`Marble Board: ${mc.paid} paid + ${mc.free} free = ${mc.total} games\n`:""}${snapWQty>0?`Wooden Board: ${wc.paid} paid + ${wc.free} free = ${wc.total} games\n`:""}\nTotal: ₦${snapTotal.toLocaleString()}\nDate: ${snapDate} at ${snapTime}`,
+      waLink,
+    });
+    window._nbFallback={snapName,snapPhone,snapDate,snapTime,snapMQty,snapWQty,snapTotal};
+    setShowSuccess(true);
+    resetForm();
+    setSendStatus(null);
   };
 
   const getFallback=()=>window._nbFallback||{snapName:form.name,snapPhone:form.phone,snapDate:form.date,snapTime:form.time,snapMQty:marbleQty,snapWQty:woodQty,snapTotal:totalCost};
@@ -975,92 +1010,13 @@ export default function NostoryBridge(){
         </div>
       )}
 
-      {/* #8 TOURNAMENT BANNER */}
-      {showBanner&&appLoaded&&(
-        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:400,background:"linear-gradient(90deg,#c0392b,#8b1a1a)",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,flex:1,flexWrap:"wrap"}}>
-            <span style={{fontSize:"0.9rem"}}>🏆</span>
-            <span style={{fontSize:"0.68rem",letterSpacing:"0.1em",color:"#fff",fontFamily:"'Fira Code',monospace"}}>
-              <strong>NEXT TOURNAMENT:</strong> Saturday 28 Jun — Register at the counter · 08080236462
-            </span>
-          </div>
-          <button onClick={()=>setShowBanner(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.7)",fontSize:"1.1rem",cursor:"pointer",flexShrink:0,padding:"0 4px"}}>✕</button>
-        </div>
-      )}
-
-      {/* NAV */}
-      <nav style={{top:showBanner?'40px':'0',transition:'top 0.3s'}}>
-        <div className="nav-logo">NOSTORY <span>BRIDGE</span></div>
-        <ul className="nav-links">
-          {[["How It Works","how"],["Book & Play","book"],["Menu","menu"],["Regulars","regulars"],["Reviews","reviews"],["Leaderboard","leaderboard"],["Bets 🔜","betting"],["Find Us","location"]].map(([l,id])=>(
-            <li key={id}><a onClick={()=>scrollTo(id)}>{l}</a></li>
-          ))}
-        </ul>
-        <button className="nav-hamburger" onClick={()=>setMobileMenuOpen(o=>!o)}>{mobileMenuOpen?"✕":"☰"}</button>
-      </nav>
-
-      <div className={`mobile-menu ${mobileMenuOpen?"open":""}`}>
-        {[["How It Works","how"],["Book & Play","book"],["Menu","menu"],["Regulars","regulars"],["Reviews","reviews"],["Leaderboard","leaderboard"],["Bets 🔜","betting"],["Find Us","location"]].map(([l,id])=>(
-          <a key={id} onClick={()=>scrollTo(id)}>{l}</a>
-        ))}
-      </div>
-
-      {/* HERO */}
-      <section className="hero">
-        <div className="hero-bg"/>
-        <div className="hero-content">
-          <div className="hero-eyebrow">📍 Philip Oduniyi No. 4, Close to K-Math Hotel, Oke Aro, Ogun State</div>
-          <h1 className="hero-title">NOSTORY<br/><span className="gold">BRIDGE</span></h1>
-          <p className="hero-sub">Where Champions Come to Play</p>
-          <div className="hero-balls">{[...Array(6)].map((_,i)=><div key={i} className="ball"/>)}</div>
-          <div className="hero-ctas">
-            <button className="btn-primary" onClick={()=>scrollTo("book")}>Book a Game</button>
-            <button className="btn-secondary" onClick={()=>scrollTo("how")}>How It Works</button>
-          </div>
-          <a href="tel:+2348080236462" style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:20,color:"var(--chalk)",textDecoration:"none",fontSize:"0.72rem",letterSpacing:"0.15em",opacity:0.8,animation:"fadeUp 0.8s 0.75s ease both"}}>
-            📞 <span style={{borderBottom:"1px solid rgba(212,207,196,0.3)"}}>08080236462</span>
-          </a>
-        </div>
-      </section>
-
-      {/* #7 TABLE AVAILABILITY */}
-      <div style={{background:tableOpen?"rgba(76,175,80,0.08)":"rgba(192,57,43,0.08)",border:`1px solid ${tableOpen?"rgba(76,175,80,0.3)":"rgba(192,57,43,0.3)"}`,margin:"0 40px",padding:"14px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:10,height:10,borderRadius:"50%",background:tableOpen?"#4caf50":"#e74c3c",animation:"pulse 2s ease-in-out infinite"}}/>
-          <span style={{fontSize:"0.72rem",color:tableOpen?"#4caf50":"#e57373",letterSpacing:"0.1em",fontFamily:"'Fira Code',monospace"}}>
-            {tableOpen?"🎱 Tables Available Now — Walk in or Book Online":"🚫 Tables Currently Full — Call to Check"}
-          </span>
-        </div>
-        <a href="tel:+2348080236462" style={{fontSize:"0.65rem",color:"var(--gold)",letterSpacing:"0.15em",textDecoration:"none",textTransform:"uppercase"}}>
-          📞 Call 08080236462
-        </a>
-      </div>
+      {showBanner&&appLoaded&&<TournamentBanner onClose={()=>setShowBanner(false)} />}
+      <Navigation showBanner={showBanner} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} scrollTo={scrollTo} />
+      <HeroSection scrollTo={scrollTo} />
+      <TableAvailability tableOpen={tableOpen} />
 
       <div className="divider"/>
-
-      {/* #8 — HOW IT WORKS */}
-      <section className="section" id="how">
-        <div className="section-label">Getting Started</div>
-        <h2 className="section-title">How It Works</h2>
-        <p className="section-sub">Three simple steps to get on the table at Nostory Bridge.</p>
-        <div className="hiw-grid">
-          {[
-            {num:"01",icon:"🎱",title:"Pick Your Board",desc:"Choose the Marble Board (1 free every 5) or Wooden Board (2 free every 5). Order as many games as you want — or both boards at once."},
-            {num:"02",icon:"💳",title:"Pay & Upload",desc:"Transfer your game fee to our Premium Trust Bank account (4026951870). Upload your payment screenshot to confirm. Booking lands straight in our Telegram."},
-            {num:"03",icon:"🏆",title:"Come & Play",desc:"Show up at Oke Aro, tell us your name, and we set up your table. Your coins are ready. Grab a drink, order shawarma, and let the games begin."},
-          ].map((s,i)=>(
-            <React.Fragment key={i}>
-              <div className="hiw-card">
-                <div className="hiw-num">{s.num}</div>
-                <div className="hiw-icon">{s.icon}</div>
-                <div className="hiw-title">{s.title}</div>
-                <div className="hiw-desc">{s.desc}</div>
-              </div>
-              {i<2&&<div className="hiw-arrow">→</div>}
-            </React.Fragment>
-          ))}
-        </div>
-      </section>
+      <HowItWorksSection />
 
       <div className="divider"/>
 
@@ -1170,7 +1126,7 @@ export default function NostoryBridge(){
               ):(
                 <div className="upload-preview-wrap" onClick={e=>e.stopPropagation()}>
                   <img src={preview} alt="Payment screenshot"/>
-                  <button className="remove-file" onClick={removeFile}>✕</button>
+                  <button className="remove-file" onClick={removeFile}><FaTimes /></button>
                   <div className="upload-preview-name">✓ {screenshot?.name}</div>
                 </div>
               )}
@@ -1181,27 +1137,27 @@ export default function NostoryBridge(){
               <button className="btn-primary" style={{width:"100%",padding:"16px",fontSize:"0.76rem"}}
                 disabled={sendStatus==="sending"||sendStatus==="success"}
                 onClick={handleSubmit}>
-                {sendStatus==="sending"?<><span className="spinner"/>Sending to Telegram...</>:
-                 sendStatus==="success"?"✓ Booking Submitted!":
+                {sendStatus==="sending"?<><span className="spinner"/>Preparing booking...</>:
+                 sendStatus==="success"?<><FaCheck style={iconStyle} /> Booking Ready!</>:
                  !hasAnyGames?"Add Games Above ↑":
                  !form.name.trim()?"Enter Your Name Above":
                  !form.date||!isValidDate(form.date)?"Pick a Valid Date":
                  !form.time?"Select a Start Time":
                  !screenshot?"Upload Payment Screenshot ↑":
-                 "Submit Payment & Confirm Booking →"}
+                 "Prepare WhatsApp Booking →"}
               </button>
             </div>
 
-            {sendStatus==="sending"&&<div className="send-status sending">⏳ Sending booking to Telegram...</div>}
-            {sendStatus==="success"&&<div className="send-status success">✅ Sent! We will confirm your booking shortly.</div>}
+            {sendStatus==="sending"&&<div className="send-status sending">Preparing booking details...</div>}
+            {sendStatus==="success"&&<div className="send-status success"><FaCheckCircle style={iconStyle} /> Booking ready. Send it on WhatsApp to confirm.</div>}
             {sendStatus==="error"&&(()=>{
               const fb=getFallback();
               const waText=buildWaText(fb.snapName,fb.snapPhone,fb.snapDate,fb.snapTime,fb.snapMQty,fb.snapWQty,fb.snapTotal);
               return(
                 <div className="send-status error">
-                  ❌ Could not reach Telegram. Tap below to send directly on WhatsApp:
+                  Could not prepare the booking automatically. Tap below to send directly on WhatsApp:
                   <br/>
-                  <a href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waText)}`} className="btn-wa" target="_blank" rel="noreferrer">💬 Send Booking on WhatsApp</a>
+                  <a href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waText)}`} className="btn-wa" target="_blank" rel="noreferrer"><FaWhatsapp style={iconStyle} /> Send Booking on WhatsApp</a>
                 </div>
               );
             })()}
@@ -1281,16 +1237,16 @@ export default function NostoryBridge(){
         <div className="section-label">Canteen</div>
         <h2 className="section-title">Food & Drinks</h2>
         <div style={{marginBottom:22,padding:"12px 16px",background:"rgba(201,146,42,0.06)",border:"1px solid rgba(201,146,42,0.15)",fontSize:"0.7rem",color:"var(--chalk)"}}>
-          🌯 Order at the counter or pre-order via WhatsApp before arriving. Staff will deliver to your table.
+          <MdRestaurant style={iconStyle} /> Order at the counter or pre-order via WhatsApp before arriving. Staff will deliver to your table.
         </div>
         <div className="menu-tabs">
-          <button className={`menu-tab ${menuTab==="beverages"?"active":""}`} onClick={()=>setMenuTab("beverages")}>🥤 Beverages</button>
-          <button className={`menu-tab ${menuTab==="shawarma"?"active":""}`}   onClick={()=>setMenuTab("shawarma")}>🌯 Shawarma</button>
+          <button className={`menu-tab ${menuTab==="beverages"?"active":""}`} onClick={()=>setMenuTab("beverages")}><MdLocalDrink style={iconStyle} /> Beverages</button>
+          <button className={`menu-tab ${menuTab==="shawarma"?"active":""}`}   onClick={()=>setMenuTab("shawarma")}><MdRestaurant style={iconStyle} /> Shawarma</button>
         </div>
         <div className="menu-grid">
           {MENU_DATA[menuTab].map(item=>(
             <div className="menu-card" key={item.id}>
-              <div className="menu-emoji">{item.emoji}</div>
+              <div className="menu-emoji"><MenuIcon item={item} /></div>
               <div className="menu-name">{item.name}</div>
               <div className="menu-desc">{item.desc}</div>
               {/* #6 — Pre-order via WhatsApp */}
@@ -1298,7 +1254,7 @@ export default function NostoryBridge(){
                 <span className="menu-note">Order at counter</span>
                 <a href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hi! I'd like to pre-order: ${item.name} at Nostory Bridge`)}`}
                   className="menu-wa-btn" target="_blank" rel="noreferrer">
-                  💬 Pre-order
+                  <FaWhatsapp style={iconStyle} /> Pre-order
                 </a>
               </div>
             </div>
@@ -1345,16 +1301,16 @@ export default function NostoryBridge(){
         <h2 className="section-title">Nostory Bets</h2>
         <p className="section-sub">Predict match winners, stake your coins, and collect your winnings — live at Nostory Bridge.</p>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:36,padding:"14px 20px",background:"linear-gradient(90deg,rgba(201,146,42,0.08),rgba(201,146,42,0.03))",border:"1px solid rgba(201,146,42,0.25)",flexWrap:"wrap"}}>
-          {[["✅","Live Now","var(--gold)"],["🔄","Bets — Next","#4caf50"],["🔒","Tournaments","var(--chalk)"],["🔒","League Table","var(--chalk)"]].map(([icon,label,col],i)=>(
+          {[["check","Live Now","var(--gold)"],["sync","Bets — Next","#4caf50"],["lock","Tournaments","var(--chalk)"],["lock","League Table","var(--chalk)"]].map(([icon,label,col],i)=>(
             <React.Fragment key={i}>
               <div style={{display:"flex",alignItems:"center",gap:5}}>
-                <span style={{fontSize:"0.8rem"}}>{icon}</span>
+                <StatusIcon type={icon} style={{fontSize:"0.8rem"}} />
                 <span style={{fontSize:"0.6rem",letterSpacing:"0.15em",textTransform:"uppercase",color:col,whiteSpace:"nowrap"}}>{label}</span>
               </div>
               {i<3&&<span style={{color:"rgba(201,146,42,0.3)",fontSize:"0.8rem"}}>→</span>}
             </React.Fragment>
           ))}
-          <div style={{marginLeft:"auto",background:"rgba(76,175,80,0.15)",border:"1px solid rgba(76,175,80,0.4)",color:"#4caf50",padding:"4px 12px",fontSize:"0.6rem",letterSpacing:"0.2em",textTransform:"uppercase",whiteSpace:"nowrap"}}>🚀 In Development</div>
+          <div style={{marginLeft:"auto",background:"rgba(76,175,80,0.15)",border:"1px solid rgba(76,175,80,0.4)",color:"#4caf50",padding:"4px 12px",fontSize:"0.6rem",letterSpacing:"0.2em",textTransform:"uppercase",whiteSpace:"nowrap"}}><FaCheckCircle style={iconStyle} /> In Development</div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:20,marginBottom:40}}>
           {[
@@ -1368,13 +1324,13 @@ export default function NostoryBridge(){
         </div>
         <div style={{background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.2)",padding:"40px 32px",textAlign:"center",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(45deg,rgba(201,146,42,0.015) 0px,rgba(201,146,42,0.015) 1px,transparent 1px,transparent 20px)",pointerEvents:"none"}}/>
-          <div style={{fontSize:"2.8rem",marginBottom:16}}>🔐</div>
+          <div style={{fontSize:"2.8rem",marginBottom:16}}><FaLock /></div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2rem",letterSpacing:"0.1em",color:"var(--gold-bright)",marginBottom:12}}>Full Betting System Coming Soon</div>
           <div style={{fontSize:"0.78rem",color:"var(--chalk)",lineHeight:1.8,maxWidth:520,margin:"0 auto",marginBottom:28}}>Place real stakes on your favourite players, track live odds, and collect winnings at the counter. Built exclusively for Nostory Bridge regulars.</div>
           <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
             {["Live Odds","Bet Slip","Match History","Player Stats","Payout Counter"].map(f=>(
               <div key={f} style={{background:"rgba(201,146,42,0.08)",border:"1px solid rgba(201,146,42,0.2)",color:"var(--chalk)",padding:"7px 14px",fontSize:"0.65rem",letterSpacing:"0.12em",textTransform:"uppercase",display:"flex",alignItems:"center",gap:6}}>
-                <span style={{color:"var(--gold-dim)"}}>🔒</span>{f}
+                <span style={{color:"var(--gold-dim)"}}><FaLock /></span>{f}
               </div>
             ))}
           </div>
@@ -1392,10 +1348,10 @@ export default function NostoryBridge(){
         <h2 className="section-title">Visit Nostory Bridge</h2>
         <div className="location-card">
           <div>
-            <div className="info-item"><div className="info-icon">📍</div><div className="info-text"><strong>Address</strong>Philip Oduniyi No. 4, Close to K-Math Hotel,<br/>Oke Aro, Ogun State, Nigeria</div></div>
-            <div className="info-item"><div className="info-icon">📞</div><div className="info-text"><strong>Phone & WhatsApp</strong><a href="tel:+2348080236462">08080236462</a><br/><a href={`https://wa.me/${WA_NUMBER}`} target="_blank" rel="noreferrer">Chat on WhatsApp →</a></div></div>
-            <div className="info-item"><div className="info-icon">🐦</div><div className="info-text"><strong>Social / X</strong><a href="https://x.com/nostoryboss" target="_blank" rel="noreferrer">@nostoryboss</a><br/>DM for tournaments & group bookings</div></div>
-            <div className="info-item"><div className="info-icon">✉️</div><div className="info-text"><strong>Email</strong><a href="mailto:odemakindeezekiel5@gmail.com">odemakindeezekiel5@gmail.com</a></div></div>
+            <div className="info-item"><div className="info-icon"><FaMapMarkerAlt /></div><div className="info-text"><strong>Address</strong>Philip Oduniyi No. 4, Close to K-Math Hotel,<br/>Oke Aro, Ogun State, Nigeria</div></div>
+            <div className="info-item"><div className="info-icon"><FaPhoneAlt /></div><div className="info-text"><strong>Phone & WhatsApp</strong><a href="tel:+2348080236462">08080236462</a><br/><a href={`https://wa.me/${WA_NUMBER}`} target="_blank" rel="noreferrer">Chat on WhatsApp →</a></div></div>
+            <div className="info-item"><div className="info-icon"><FaXTwitter /></div><div className="info-text"><strong>Social / X</strong><a href="https://x.com/nostoryboss" target="_blank" rel="noreferrer">@nostoryboss</a><br/>DM for tournaments & group bookings</div></div>
+            <div className="info-item"><div className="info-icon"><FaEnvelope /></div><div className="info-text"><strong>Email</strong><a href="mailto:odemakindeezekiel5@gmail.com">odemakindeezekiel5@gmail.com</a></div></div>
           </div>
           <div>
             <div style={{marginBottom:16,fontSize:"0.6rem",letterSpacing:"0.25em",textTransform:"uppercase",color:"var(--gold)"}}>Opening Hours</div>
@@ -1405,7 +1361,7 @@ export default function NostoryBridge(){
               ))}
             </div>
             <div style={{marginTop:24,padding:"13px 16px",background:"rgba(201,146,42,0.07)",border:"1px solid rgba(201,146,42,0.2)",fontSize:"0.72rem",color:"var(--chalk)",lineHeight:1.6}}>
-              🏆 Available for private events, birthdays & Web3 community tournaments.<br/>Call or WhatsApp <strong style={{color:"var(--cream)"}}>08080236462</strong> to plan your event.
+              <FaTrophy style={iconStyle} /> Available for private events, birthdays & Web3 community tournaments.<br/>Call or WhatsApp <strong style={{color:"var(--cream)"}}>08080236462</strong> to plan your event.
             </div>
           </div>
         </div>
@@ -1415,19 +1371,19 @@ export default function NostoryBridge(){
           {/* #10 SHARE BUTTON */}
           <div style={{marginTop:24,padding:"16px 20px",background:"var(--felt-mid)",border:"1px solid rgba(201,146,42,0.15)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
             <div>
-              <div style={{fontSize:"0.7rem",color:"var(--cream)",marginBottom:3}}>📣 Share Nostory Bridge</div>
+              <div style={{fontSize:"0.7rem",color:"var(--cream)",marginBottom:3}}><FaShareAlt style={iconStyle} /> Share Nostory Bridge</div>
               <div style={{fontSize:"0.62rem",color:"var(--chalk)",opacity:0.7}}>Let your people know about us</div>
             </div>
             <div style={{display:"flex",gap:8}}>
               <a href={`https://wa.me/?text=${encodeURIComponent("Check out Nostory Bridge — premium snooker lounge in Oke Aro, Ogun State. Book online: https://www.nostorybridge.name.ng 🎱")}`}
                 target="_blank" rel="noreferrer"
                 style={{background:"#25D366",color:"#fff",padding:"8px 14px",fontSize:"0.65rem",letterSpacing:"0.1em",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:6,fontFamily:"monospace"}}>
-                💬 WhatsApp
+                <FaWhatsapp /> WhatsApp
               </a>
               <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent("Just discovered Nostory Bridge — premium snooker lounge in Oke Aro, Ogun State 🎱 Book a table online: https://www.nostorybridge.name.ng @nostoryboss")}`}
                 target="_blank" rel="noreferrer"
                 style={{background:"#000",color:"#fff",padding:"8px 14px",fontSize:"0.65rem",letterSpacing:"0.1em",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:6,fontFamily:"monospace"}}>
-                𝕏 Tweet
+                <FaXTwitter /> Tweet
               </a>
             </div>
           </div>
@@ -1452,20 +1408,20 @@ export default function NostoryBridge(){
       {/* #10 — WHATSAPP FLOATING BUTTON */}
       <a href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("Hi Nostory Bridge! 👋")}`}
         className="btn-wa-float" target="_blank" rel="noreferrer" title="Chat on WhatsApp">
-        💬
+        <FaWhatsapp />
       </a>
 
       {/* SUCCESS MODAL — #5 WhatsApp confirm button */}
       {showSuccess&&(
         <div className="success-overlay" onClick={()=>setShowSuccess(false)}>
           <div className="success-card" onClick={e=>e.stopPropagation()}>
-            <div className="success-icon">🎱</div>
+            <div className="success-icon"><GiEightBall /></div>
             <div className="success-title">{successMsg.title}</div>
             <div className="success-sub">{successMsg.sub}</div>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {successMsg.waLink&&(
                 <a href={successMsg.waLink} className="btn-wa" target="_blank" rel="noreferrer" style={{justifyContent:"center",width:"100%"}}>
-                  💬 Message Us on WhatsApp
+                  <FaWhatsapp style={iconStyle} /> Message Us on WhatsApp
                 </a>
               )}
               <button className="btn-primary" style={{width:"100%"}} onClick={()=>setShowSuccess(false)}>Done</button>
